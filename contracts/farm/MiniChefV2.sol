@@ -18,8 +18,8 @@ interface IMigratorChef {
 }
 
 
-/// @notice The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
-/// It is the only address with minting rights for SUSHI.
+/// @notice The (older) MasterChef contract gives out a constant number of FLAKE tokens per block.
+/// It is the only address with minting rights for FLAKE.
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
@@ -31,7 +31,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
-    /// `rewardDebt` The amount of SUSHI entitled to the user.
+    /// `rewardDebt` The amount of FLAKE entitled to the user.
     struct UserInfo {
         uint256 amount;
         int256 rewardDebt;
@@ -39,9 +39,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     /// @notice Info of each MCV2 pool.
     /// `allocPoint` The amount of allocation points assigned to the pool.
-    /// Also known as the amount of SUSHI to distribute per block.
+    /// Also known as the amount of FLAKE to distribute per block.
     struct PoolInfo {
-        uint128 accSushiPerShare;
+        uint128 accFlakePerShare;
         uint64 lastRewardTime;
         uint64 allocPoint;
     }
@@ -49,8 +49,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     IBoost public booster;
     address public royaltyReciever;
 
-    /// @notice Address of SUSHI contract.
-    IERC20 public immutable SUSHI;
+    /// @notice Address of FLAKE contract.
+    IERC20 public immutable FLAKE;
     // @notice The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
 
@@ -72,8 +72,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @dev Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint;
 
-    uint256 public sushiPerSecond;
-    uint256 private constant ACC_SUSHI_PRECISION = 1e12;
+    uint256 public flakePerSecond;
+    uint256 private constant ACC_FLAKE_PRECISION = 1e12;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
@@ -81,12 +81,12 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     event Harvest(address indexed user, uint256 indexed pid, uint256 amount,uint256 boostedAmount);
     event LogPoolAddition(uint256 indexed pid, uint256 allocPoint, IERC20 indexed lpToken, IRewarder indexed rewarder);
     event LogSetPool(uint256 indexed pid, uint256 allocPoint, IRewarder indexed rewarder, bool overwrite);
-    event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accSushiPerShare);
-    event LogSushiPerSecond(uint256 sushiPerSecond);
+    event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accFlakePerShare);
+    event LogFlakePerSecond(uint256 flakePerSecond);
 
-    /// @param _sushi The SUSHI token contract address.
-    constructor(IERC20 _sushi) public {
-        SUSHI = _sushi;
+    /// @param _flake The FLAKE token contract address.
+    constructor(IERC20 _flake) public {
+        FLAKE = _flake;
     }
 
     /// @notice Returns the number of MCV2 pools.
@@ -109,13 +109,13 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         poolInfo.push(PoolInfo({
             allocPoint: allocPoint.to64(),
             lastRewardTime: block.timestamp.to64(),
-            accSushiPerShare: 0
+            accFlakePerShare: 0
         }));
         addedTokens[address(_lpToken)] = true;
         emit LogPoolAddition(lpToken.length.sub(1), allocPoint, _lpToken, _rewarder);
     }
 
-    /// @notice Update the given pool's SUSHI allocation point and `IRewarder` contract. Can only be called by the owner.
+    /// @notice Update the given pool's FLAKE allocation point and `IRewarder` contract. Can only be called by the owner.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _allocPoint New AP of the pool.
     /// @param _rewarder Address of the rewarder delegate.
@@ -127,11 +127,11 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         emit LogSetPool(_pid, _allocPoint, overwrite ? _rewarder : rewarder[_pid], overwrite);
     }
 
-    /// @notice Sets the sushi per second to be distributed. Can only be called by the owner.
-    /// @param _sushiPerSecond The amount of Sushi to be distributed per second.
-    function setSushiPerSecond(uint256 _sushiPerSecond) public onlyOwner {
-        sushiPerSecond = _sushiPerSecond;
-        emit LogSushiPerSecond(_sushiPerSecond);
+    /// @notice Sets the FLAKE per second to be distributed. Can only be called by the owner.
+    /// @param _flakePerSecond The amount of FLAKE to be distributed per second.
+    function setFlakePerSecond(uint256 _flakePerSecond) public onlyOwner {
+        flakePerSecond = _flakePerSecond;
+        emit LogFlakePerSecond(_flakePerSecond);
     }
 
     /// @notice Set the `migrator` contract. Can only be called by the owner.
@@ -155,21 +155,21 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         lpToken[_pid] = newLpToken;
     }
 
-    /// @notice View function to see pending SUSHI on frontend.
+    /// @notice View function to see pending FLAKE on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
-    /// @return pending SUSHI reward for a given user.
-    function pendingSushi(uint256 _pid, address _user) external view returns (uint256 pending) {
+    /// @return pending FLAKE reward for a given user.
+    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 pending) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accSushiPerShare = pool.accSushiPerShare;
+        uint256 accFlakePerShare = pool.accFlakePerShare;
         uint256 lpSupply = lpGauges[_pid].totalSupply();
         if (block.timestamp > pool.lastRewardTime && lpSupply != 0) {
             uint256 time = block.timestamp.sub(pool.lastRewardTime);
-            uint256 sushiReward = time.mul(sushiPerSecond).mul(pool.allocPoint) / totalAllocPoint;
-            accSushiPerShare = accSushiPerShare.add(sushiReward.mul(ACC_SUSHI_PRECISION) / lpSupply);
+            uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
+            accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply);
         }
-        pending = int256(user.amount.mul(accSushiPerShare) / ACC_SUSHI_PRECISION).sub(user.rewardDebt).toUInt256();
+        pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -190,12 +190,12 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
             uint256 lpSupply = lpGauges[pid].totalSupply();
             if (lpSupply > 0) {
                 uint256 time = block.timestamp.sub(pool.lastRewardTime);
-                uint256 sushiReward = time.mul(sushiPerSecond).mul(pool.allocPoint) / totalAllocPoint;
-                pool.accSushiPerShare = pool.accSushiPerShare.add((sushiReward.mul(ACC_SUSHI_PRECISION) / lpSupply).to128());
+                uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
+                pool.accFlakePerShare = pool.accFlakePerShare.add((flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply).to128());
             }
             pool.lastRewardTime = block.timestamp.to64();
             poolInfo[pid] = pool;
-            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accSushiPerShare);
+            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
         }
     }
     function onTransfer(uint256 pid,address from,address to) external {
@@ -214,7 +214,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
             }
         }
     }
-    /// @notice Deposit LP tokens to MCV2 for SUSHI allocation.
+    /// @notice Deposit LP tokens to MCV2 for FLAKE allocation.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to deposit.
     /// @param to The receiver of `amount` deposit benefit.
@@ -231,12 +231,12 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     function depoistPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal {
         UserInfo storage user = userInfo[pid][to];
         user.amount = user.amount.add(amount);
-        user.rewardDebt = user.rewardDebt.add(int256(amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION));
+        user.rewardDebt = user.rewardDebt.add(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onSushiReward(pid, to, to, 0, user.amount,false);
+            _rewarder.onFlakeReward(pid, to, to, 0, user.amount,false);
         }
     }
     /// @notice Withdraw LP tokens from MCV2.
@@ -254,93 +254,93 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal{
         UserInfo storage user = userInfo[pid][msg.sender];
         // Effects
-        user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION));
+        user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
         user.amount = user.amount.sub(amount);
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onSushiReward(pid, msg.sender, to, 0, user.amount,false);
+            _rewarder.onFlakeReward(pid, msg.sender, to, 0, user.amount,false);
         }
     }
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
-    /// @param to Receiver of SUSHI rewards.
+    /// @param to Receiver of FLAKE rewards.
     function harvest(uint256 pid, address to) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
-        int256 accumulatedSushi = int256(user.amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION);
-        uint256 _pendingSushi = accumulatedSushi.sub(user.rewardDebt).toUInt256();
+        int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
+        uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         /////////////////////////////////////////////////////////////////////////
         //get the reward after boost
-        uint256 boostedReward = _pendingSushi;
+        uint256 boostedReward = _pendingFlake;
         uint256 teamRoyalty = 0;
-        (_pendingSushi,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingSushi);
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingFlake);
         if(teamRoyalty>0) {
-            SUSHI.safeTransfer(royaltyReciever, teamRoyalty);
+            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
         }
 
-        if(_pendingSushi>boostedReward) {
-            boostedReward = _pendingSushi.sub(boostedReward);
+        if(_pendingFlake>boostedReward) {
+            boostedReward = _pendingFlake.sub(boostedReward);
         }
         //////////////////////////////////////////////////////////////////////////
 
         // Effects
-        user.rewardDebt = accumulatedSushi;
+        user.rewardDebt = accumulatedFlake;
 
         // Interactions
-        if (_pendingSushi != 0) {
-            SUSHI.safeTransfer(to, _pendingSushi);
+        if (_pendingFlake != 0) {
+            FLAKE.safeTransfer(to, _pendingFlake);
         }
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onSushiReward( pid, msg.sender, to, _pendingSushi, user.amount,true);
+            _rewarder.onFlakeReward( pid, msg.sender, to, _pendingFlake, user.amount,true);
         }
 
-        emit Harvest(msg.sender, pid, _pendingSushi,boostedReward);
+        emit Harvest(msg.sender, pid, _pendingFlake,boostedReward);
     }
 
     /// @notice Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
-    /// @param to Receiver of the LP tokens and SUSHI rewards.
+    /// @param to Receiver of the LP tokens and FLAKE rewards.
     function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
-        int256 accumulatedSushi = int256(user.amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION);
-        uint256 _pendingSushi = accumulatedSushi.sub(user.rewardDebt).toUInt256();
+        int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
+        uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         ////////////////////////////////////////////////////////////////////////
         //get the reward after boost
-        uint256 boostedReward = _pendingSushi;
+        uint256 boostedReward = _pendingFlake;
         uint256 teamRoyalty = 0;
-        (_pendingSushi,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingSushi);
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingFlake);
         if(teamRoyalty>0) {
-            SUSHI.safeTransfer(royaltyReciever, teamRoyalty);
+            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
         }
 
-        if(_pendingSushi>boostedReward) {
-            boostedReward = _pendingSushi.sub(boostedReward);
+        if(_pendingFlake>boostedReward) {
+            boostedReward = _pendingFlake.sub(boostedReward);
         }
         //////////////////////////////////////////////////////////////////////////
         // Effects
-        user.rewardDebt = accumulatedSushi.sub(int256(amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION));
+        user.rewardDebt = accumulatedFlake.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
         user.amount = user.amount.sub(amount);
         lpGauges[pid].burn(msg.sender,amount);
 
         // Interactions
-        SUSHI.safeTransfer(to, _pendingSushi);
+        FLAKE.safeTransfer(to, _pendingFlake);
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onSushiReward(pid, msg.sender, to, _pendingSushi, user.amount,true);
+            _rewarder.onFlakeReward(pid, msg.sender, to, _pendingFlake, user.amount,true);
         }
 
 
         lpToken[pid].safeTransfer(to, amount);
 
         emit Withdraw(msg.sender, pid, amount, to);
-        emit Harvest(msg.sender, pid, _pendingSushi,boostedReward);
+        emit Harvest(msg.sender, pid, _pendingFlake,boostedReward);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -355,7 +355,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onSushiReward(pid, msg.sender, to, 0, 0,false);
+            _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false);
         }
 
         // Note: transfer can fail or succeed if `amount` is zero.
@@ -369,7 +369,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {
         booster.boostDeposit(_pid,msg.sender,_amount);
-        SUSHI.safeTransferFrom(msg.sender,address(booster), _amount);
+        FLAKE.safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
     function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
