@@ -78,7 +78,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
-    event Harvest(address indexed user, uint256 indexed pid, uint256 amount);
+    event Harvest(address indexed user, uint256 indexed pid, uint256 amount,uint256 boostedAmount);
     event LogPoolAddition(uint256 indexed pid, uint256 allocPoint, IERC20 indexed lpToken, IRewarder indexed rewarder);
     event LogSetPool(uint256 indexed pid, uint256 allocPoint, IRewarder indexed rewarder, bool overwrite);
     event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accSushiPerShare);
@@ -271,6 +271,19 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedSushi = int256(user.amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION);
         uint256 _pendingSushi = accumulatedSushi.sub(user.rewardDebt).toUInt256();
+        /////////////////////////////////////////////////////////////////////////
+        //get the reward after boost
+        uint256 boostedReward = _pendingSushi;
+        uint256 teamRoyalty = 0;
+        (_pendingSushi,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingSushi);
+        if(teamRoyalty>0) {
+            SUSHI.safeTransfer(royaltyReciever, teamRoyalty);
+        }
+
+        if(_pendingSushi>boostedReward) {
+            boostedReward = _pendingSushi.sub(boostedReward);
+        }
+        //////////////////////////////////////////////////////////////////////////
 
         // Effects
         user.rewardDebt = accumulatedSushi;
@@ -285,7 +298,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
             _rewarder.onSushiReward( pid, msg.sender, to, _pendingSushi, user.amount,true);
         }
 
-        emit Harvest(msg.sender, pid, _pendingSushi);
+        emit Harvest(msg.sender, pid, _pendingSushi,boostedReward);
     }
 
     /// @notice Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
@@ -297,7 +310,19 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedSushi = int256(user.amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION);
         uint256 _pendingSushi = accumulatedSushi.sub(user.rewardDebt).toUInt256();
+        ////////////////////////////////////////////////////////////////////////
+        //get the reward after boost
+        uint256 boostedReward = _pendingSushi;
+        uint256 teamRoyalty = 0;
+        (_pendingSushi,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingSushi);
+        if(teamRoyalty>0) {
+            SUSHI.safeTransfer(royaltyReciever, teamRoyalty);
+        }
 
+        if(_pendingSushi>boostedReward) {
+            boostedReward = _pendingSushi.sub(boostedReward);
+        }
+        //////////////////////////////////////////////////////////////////////////
         // Effects
         user.rewardDebt = accumulatedSushi.sub(int256(amount.mul(pool.accSushiPerShare) / ACC_SUSHI_PRECISION));
         user.amount = user.amount.sub(amount);
@@ -311,10 +336,11 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
             _rewarder.onSushiReward(pid, msg.sender, to, _pendingSushi, user.amount,true);
         }
 
+
         lpToken[pid].safeTransfer(to, amount);
 
         emit Withdraw(msg.sender, pid, amount, to);
-        emit Harvest(msg.sender, pid, _pendingSushi);
+        emit Harvest(msg.sender, pid, _pendingSushi,boostedReward);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -337,29 +363,36 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
     }
 ///////////////////////////////////////////////////////////////////////////////
+//function getTotalBoostedAmount(uint256 _pid,address _user,uint256 _lpamount,uint256 _baseamount)external view returns(uint256,uint256);
+//function boostDeposit(uint256 _pid,address _account,uint256 _amount) external;
+//function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) external;
+//function boostWithdraw(uint256 _pid,address _account) external;
+//function boostStakedFor(uint256 _pid,address _account) external view returns (uint256);
+//function boostTotalStaked(uint256 _pid) external view returns (uint256);
+
     function setBooster(address _booster) public onlyOwner {
         booster = IBoost(_booster);
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {
-
+        booster.boostDeposit(_pid,msg.sender,_amount);
+        SUSHI.safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
     function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
-
+        booster.boostApplyWithdraw(_pid,msg.sender,_amount);
     }
 
     function boostWithdraw(uint256 _pid) external {
-
+        booster.boostWithdraw(_pid,msg.sender);
     }
 
     function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
-
+        booster.boostStakedFor(_pid,_account);
     }
 
     function boostTotalStaked(uint256 _pid) external view returns (uint256) {
-
+        booster.boostTotalStaked(_pid);
     }
-
 
 }

@@ -83,6 +83,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         boostPara[_pid].lockTime = _lockTime;
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
+
+        IERC20(boostPara[_pid].boostToken).approve(farmChef,uint256(-1));
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,15 +179,19 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function boostDeposit(uint256 _pid,address _account,uint256 _amount) nonReentrant external {
+        require(msg.sender==farmChef,"have no permission");
+
         require(boostPara[_pid].enableTokenBoost,"pool is not allow boost");
         totalsupplies[_pid] = totalsupplies[_pid].add(_amount);
         balances[_pid][_account] = balances[_pid][_account].add(_amount);
-        IERC20(boostPara[_pid].boostToken).safeTransferFrom(_account,address(this), _amount);
+
+        //IERC20(boostPara[_pid].boostToken).safeTransferFrom(_account,address(this), _amount);
         emit BoostDeposit(_pid,_account,_amount);
     }
 
     function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) nonReentrant external{
         require(msg.sender==farmChef,"have no permission");
+
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
