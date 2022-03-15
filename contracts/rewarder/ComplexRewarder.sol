@@ -167,7 +167,7 @@ contract ComplexRewarder is IRewarder, BoringOwnable{
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accSushiPerShare = pool.accSushiPerShare;
-        uint256 lpSupply = IMiniChefPool(MASTERCHEF_V2).lpToken(_pid).balanceOf(MASTERCHEF_V2);
+        uint256 lpSupply = IMiniChefPool(MASTERCHEF_V2).lpGauges(_pid).totalSupply();
         if (block.number > pool.lastRewardBlock && lpSupply != 0) {
             uint256 blocks = block.number.sub(pool.lastRewardBlock);
             uint256 sushiReward = blocks.mul(tokenPerBlock).mul(pool.allocPoint) / totalAllocPoint;
@@ -192,7 +192,7 @@ contract ComplexRewarder is IRewarder, BoringOwnable{
         pool = poolInfo[pid];
         require(pool.lastRewardBlock != 0, "Pool does not exist");
         if (block.number > pool.lastRewardBlock) {
-            uint256 lpSupply = IMiniChefPool(MASTERCHEF_V2).lpToken(pid).balanceOf(MASTERCHEF_V2);
+            uint256 lpSupply = IMiniChefPool(MASTERCHEF_V2).lpGauges(pid).totalSupply();
 
             if (lpSupply > 0) {
                 uint256 blocks = block.number.sub(pool.lastRewardBlock);
