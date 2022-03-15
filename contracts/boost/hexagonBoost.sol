@@ -89,13 +89,24 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     function getTotalBoostedAmount(uint256 _pid,address _user,uint256 _lpamount,uint256 _baseamount)
         public view returns(uint256,uint256)
     {
-       uint256 whiteListBoostAmount =  getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
-       uint256  tokenBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+       uint256 whiteListBoostAmount = 0;
+       if(isWhiteListBoost(_pid)) {
+           whiteListBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+       }
+
+       uint256  tokenBoostAmount = 0;
+       if(isTokenBoost(_pid)) {
+           tokenBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+       }
+
        uint256 totalBoostAmount = _baseamount.add(whiteListBoostAmount).add(tokenBoostAmount);
 
-       uint256 teamAmount = getTeamAmount(_pid,_baseamount);
-
-       return (totalBoostAmount.sub(teamAmount),teamAmount);
+       if(isTeamRoyalty(_pid)) {
+           uint256 teamAmount = getTeamAmount(_pid,_baseamount);
+           return (totalBoostAmount.sub(teamAmount),teamAmount);
+       } else {
+           return (totalBoostAmount,0);
+       }
     }
 
     function getTeamRatio(uint256 _pid)
@@ -174,6 +185,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) nonReentrant external{
+        require(msg.sender==farmChef,"have no permission");
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
@@ -182,6 +194,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function boostWithdraw(uint256 _pid,address _account) external nonReentrant{
+        require(msg.sender==farmChef,"have no permission");
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
         (uint256 amount,uint256 index) = boostWithdrawPendingFor(_pid,_account);
 
@@ -222,6 +235,18 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
     function boostTotalStaked(uint256 _pid) public view returns (uint256){
         return totalsupplies[_pid];
+    }
+
+    function isTokenBoost(uint256 _pid) public view returns (bool){
+        return boostPara[_pid].enableTokenBoost;
+    }
+
+    function isWhiteListBoost(uint256 _pid) public view returns (bool){
+        return  boostPara[_pid].fixedWhitelistRatio>0;
+    }
+
+    function isTeamRoyalty(uint256 _pid) public view returns (bool){
+        return  boostPara[_pid].fixedTeamRatio>0;
     }
 
     function currentTime() internal view returns(uint64){

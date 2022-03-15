@@ -9,12 +9,14 @@ import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SignedSafeMath.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
+import "../interfaces/IBoost.sol";
 
 interface IMigratorChef {
     // Take the current LP token address and return the new LP token address.
     // Migrator should have full access to the caller's LP token.
     function migrate(IERC20 token) external returns (IERC20);
 }
+
 
 /// @notice The (older) MasterChef contract gives out a constant number of SUSHI tokens per block.
 /// It is the only address with minting rights for SUSHI.
@@ -43,6 +45,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         uint64 lastRewardTime;
         uint64 allocPoint;
     }
+
+    IBoost public booster;
+    address public royaltyReciever;
 
     /// @notice Address of SUSHI contract.
     IERC20 public immutable SUSHI;
@@ -332,6 +337,29 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
     }
 ///////////////////////////////////////////////////////////////////////////////
+    function setBooster(address _booster) public onlyOwner {
+        booster = IBoost(_booster);
+    }
+
+    function boostDeposit(uint256 _pid,uint256 _amount) external {
+
+    }
+
+    function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
+
+    }
+
+    function boostWithdraw(uint256 _pid) external {
+
+    }
+
+    function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
+
+    }
+
+    function boostTotalStaked(uint256 _pid) external view returns (uint256) {
+
+    }
 
 
 }
