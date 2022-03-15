@@ -4,13 +4,11 @@ import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 import "../libraries/SafeMath.sol";
-//import "../libraries/SafeERC20.sol";
 import "../libraries/proxyOwner.sol";
 import "./hexagonBoostStorage.sol";
 
 contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     using SafeMath for uint256;
-   // using SafeERC20 for IERC20;
     using BoringERC20 for IERC20;
 
     modifier notZeroAddress(address inputAddress) {
@@ -86,7 +84,20 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
     }
+
     //////////////////////////////////////////////////////////////////////////////////////////////////////
+    function getTotalBoostedAmount(uint256 _pid,address _user,uint256 _lpamount,uint256 _baseamount)
+        public view returns(uint256,uint256)
+    {
+       uint256 whiteListBoostAmount =  getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+       uint256  tokenBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+       uint256 totalBoostAmount = _baseamount.add(whiteListBoostAmount).add(tokenBoostAmount);
+
+       uint256 teamAmount = getTeamAmount(_pid,_baseamount);
+
+       return (totalBoostAmount.sub(teamAmount),teamAmount);
+    }
+
     function getTeamRatio(uint256 _pid)
         public view returns(uint256,uint256)
     {
@@ -125,7 +136,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function getUserBoostIncAmount(uint256 _pid,address _account,uint256 _baseamount)
-        external view returns(uint256)
+        public view returns(uint256)
     {
         (uint256 ratio,uint256 denom) =  boostRatio(_pid,balances[_pid][_account]);
         return _baseamount.mul(ratio).div(denom);
@@ -182,7 +193,6 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             IERC20(boostPara[_pid].boostToken).safeTransfer(_account, amount);
             emit BoostWithdraw(_pid,_account, amount);
         }
-
     }
 
     function boostWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
@@ -253,6 +263,5 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         }
 
         return mid;
-
     }
 }
