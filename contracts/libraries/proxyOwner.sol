@@ -23,19 +23,19 @@ contract proxyOwner is multiSignatureClient{
      * @param _newOwner The address to transfer ownership to
      */
 
-    function transferOwnership(address _newOwner) public onlyOwner
+    function transferOwnership(address _newOwner) public onlyMulSigOwner
     {
         _setProxyOwner(_newOwner);
     }
     function _setProxyOwner(address _newOwner) internal 
     {
-        emit OwnershipTransferred(owner(),_newOwner);
+        emit OwnershipTransferred(mulsigOwner(),_newOwner);
         bytes32 position = proxyOwnerPosition;
         assembly {
             sstore(position, _newOwner)
         }
     }
-    function owner() public view returns (address _owner) {
+    function mulsigOwner() public view returns (address _owner) {
         bytes32 position = proxyOwnerPosition;
         assembly {
             _owner := sload(position)
@@ -44,7 +44,7 @@ contract proxyOwner is multiSignatureClient{
     /**
     * @dev Throws if called by any account other than the owner.
     */
-    modifier onlyOwner() {
+    modifier onlyMulSigOwner() {
         require (isOwner(),"proxyOwner: caller must be the proxy owner and a contract and not expired");
         _;
     }
@@ -90,7 +90,7 @@ contract proxyOwner is multiSignatureClient{
         return  msg.sender == _origin0 || msg.sender == _origin1;
     }
     function isOwner() public view returns (bool) {
-        return msg.sender == owner();//&& isContract(msg.sender);
+        return msg.sender == mulsigOwner();//&& isContract(msg.sender);
     }
     /**
     * @dev Throws if called by any account other than the owner.

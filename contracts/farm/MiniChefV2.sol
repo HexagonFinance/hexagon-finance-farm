@@ -7,6 +7,7 @@ import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SignedSafeMath.sol";
+import "../libraries/proxyOwner.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
@@ -23,7 +24,7 @@ interface IMigratorChef {
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MiniChefV2 is BoringOwnable, BoringBatchable {
+contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
     using BoringMath for uint256;
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
@@ -48,6 +49,12 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     IBoost public booster;
     address public royaltyReciever;
+    address public safeMulsig;
+    //for test or use safe mulsig
+    modifier onlyOrigin() {
+        require(msg.sender==safeMulsig, "not setting safe contract");
+        _;
+    }
 
     /// @notice Address of FLAKE contract.
     IERC20 public immutable FLAKE;
@@ -85,8 +92,15 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     event LogFlakePerSecond(uint256 flakePerSecond);
 
     /// @param _flake The FLAKE token contract address.
-    constructor(IERC20 _flake) public {
+    constructor(address _multiSignature,
+               // address _origin0,
+               // address _origin1,
+                IERC20 _flake)
+        //proxyOwner(_multiSignature, _origin0, _origin1)
+        public
+    {
         FLAKE = _flake;
+        safeMulsig = _multiSignature;
     }
 
     /// @notice Returns the number of MCV2 pools.
@@ -99,7 +113,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param allocPoint AP of the new pool.
     /// @param _lpToken Address of the LP ERC-20 token.
     /// @param _rewarder Address of the rewarder delegate.
-    function add(uint256 allocPoint, IERC20 _lpToken, IRewarder _rewarder) public onlyOwner {
+    function add(uint256 allocPoint, IERC20 _lpToken, IRewarder _rewarder) public onlyOrigin {
         require(addedTokens[address(_lpToken)] == false, "Token already added");
         totalAllocPoint = totalAllocPoint.add(allocPoint);
         lpToken.push(_lpToken);
@@ -120,7 +134,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param _allocPoint New AP of the pool.
     /// @param _rewarder Address of the rewarder delegate.
     /// @param overwrite True if _rewarder should be `set`. Otherwise `_rewarder` is ignored.
-    function set(uint256 _pid, uint256 _allocPoint, IRewarder _rewarder, bool overwrite) public onlyOwner {
+    function set(uint256 _pid, uint256 _allocPoint, IRewarder _rewarder, bool overwrite) public onlyOrigin {
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint.to64();
         if (overwrite) { rewarder[_pid] = _rewarder; }
@@ -129,14 +143,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     /// @notice Sets the FLAKE per second to be distributed. Can only be called by the owner.
     /// @param _flakePerSecond The amount of FLAKE to be distributed per second.
-    function setFlakePerSecond(uint256 _flakePerSecond) public onlyOwner {
+    function setFlakePerSecond(uint256 _flakePerSecond) public onlyOrigin {
         flakePerSecond = _flakePerSecond;
         emit LogFlakePerSecond(_flakePerSecond);
     }
 
     /// @notice Set the `migrator` contract. Can only be called by the owner.
     /// @param _migrator The contract address to set.
-    function setMigrator(IMigratorChef _migrator) public onlyOwner {
+    function setMigrator(IMigratorChef _migrator) public onlyOrigin {
         migrator = _migrator;
     }
 
@@ -228,6 +242,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
         emit Deposit(msg.sender, pid, amount, to);
     }
+
     function depoistPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal {
         UserInfo storage user = userInfo[pid][to];
         user.amount = user.amount.add(amount);
@@ -251,7 +266,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
         emit Withdraw(msg.sender, pid, amount, to);
     }
-    function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal{
+
+    function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to) internal {
         UserInfo storage user = userInfo[pid][msg.sender];
         // Effects
         user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
@@ -363,7 +379,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
     }
 ///////////////////////////////////////////////////////////////////////////////
-    function setBooster(address _booster) public onlyOwner {
+    function setBooster(address _booster) public onlyOrigin {
         booster = IBoost(_booster);
     }
 
