@@ -106,7 +106,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
        uint256 totalBoostAmount = _baseamount.add(whiteListBoostAmount).add(tokenBoostAmount);
 
        if(isTeamRoyalty(_pid)) {
-           uint256 teamAmount = getTeamAmount(_pid,_baseamount);
+           uint256 teamAmount = getTeamAmount(_pid,totalBoostAmount);
            return (totalBoostAmount.sub(teamAmount),teamAmount);
        } else {
            return (totalBoostAmount,0);

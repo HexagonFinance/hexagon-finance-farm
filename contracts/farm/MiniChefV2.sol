@@ -185,6 +185,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply);
         }
         pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
+
+        ///////////////////////////////////////////////////////////////////////////
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,user.amount,pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -296,7 +299,13 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
         /////////////////////////////////////////////////////////////////////////
         //get the reward after boost
         uint256 incReward = 0;
-        (_pendingFlake,incReward) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        //for team royalty
+        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
+            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
+        }
+
         //////////////////////////////////////////////////////////////////////////
 
         // Effects
@@ -327,7 +336,12 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
         ////////////////////////////////////////////////////////////////////////
         //get the reward after boost
         uint256 incReward = 0;
-        (_pendingFlake,incReward) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        //for team royalty
+        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
+            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
+        }
         //////////////////////////////////////////////////////////////////////////
         // Effects
         user.rewardDebt = accumulatedFlake.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
@@ -373,20 +387,16 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
         booster = IBoost(_booster);
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,uint256 _pendingFlake,uint256 _userLpAmount) internal returns(uint256,uint256) {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
         uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
         (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,msg.sender,_userLpAmount,_pendingFlake);
-        //for team royalty
-        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
-            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
-        }
 
         if(_pendingFlake>incReward) {
             incReward = _pendingFlake.sub(incReward);
         }
 
-        return (_pendingFlake,incReward);
+        return (_pendingFlake,incReward,teamRoyalty);
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) nonReentrant external {
