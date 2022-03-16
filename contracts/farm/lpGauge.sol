@@ -50,6 +50,7 @@ contract lpGauge is BoringOwnable{
       )public {
         name          = name_;
         symbol        = symbol_;
+        pid = pid_;
     }
 
     // --- Token ---

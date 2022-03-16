@@ -8,6 +8,7 @@ import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SignedSafeMath.sol";
 import "../libraries/proxyOwner.sol";
+import "../libraries/ReentrancyGuard.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
@@ -24,7 +25,7 @@ interface IMigratorChef {
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
+contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwner*/ {
     using BoringMath for uint256;
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
@@ -212,11 +213,16 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
             emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
         }
     }
+
     function onTransfer(uint256 pid,address from,address to) external {
+        //check sender permission
+        require(address(lpGauges[pid])==msg.sender,"have no permission!");
+
         PoolInfo memory pool = updatePool(pid);
         onBalanceChange(pool,pid,from);
         onBalanceChange(pool,pid,to);
     }
+
     function onBalanceChange(PoolInfo memory pool,uint256 pid,address _usr)internal {
         if (_usr != address(0)){
             UserInfo storage user = userInfo[pid][_usr];
@@ -234,7 +240,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
     /// @param to The receiver of `amount` deposit benefit.
     function deposit(uint256 pid, uint256 amount, address to) public {
         PoolInfo memory pool = updatePool(pid);
-        UserInfo storage user = userInfo[pid][to];
+        //UserInfo storage user = userInfo[pid][to];
 
         depoistPending(pool,pid,amount,to);
         lpGauges[pid].mint(to,amount);
@@ -282,23 +288,15 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of FLAKE rewards.
-    function harvest(uint256 pid, address to) public {
+    function harvest(uint256 pid, address to) nonReentrant external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
         uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         /////////////////////////////////////////////////////////////////////////
         //get the reward after boost
-        uint256 boostedReward = _pendingFlake;
-        uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingFlake);
-        if(teamRoyalty>0) {
-            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
-        }
-
-        if(_pendingFlake>boostedReward) {
-            boostedReward = _pendingFlake.sub(boostedReward);
-        }
+        uint256 incReward = 0;
+        (_pendingFlake,incReward) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
         //////////////////////////////////////////////////////////////////////////
 
         // Effects
@@ -314,30 +312,22 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
             _rewarder.onFlakeReward( pid, msg.sender, to, _pendingFlake, user.amount,true);
         }
 
-        emit Harvest(msg.sender, pid, _pendingFlake,boostedReward);
+        emit Harvest(msg.sender, pid, _pendingFlake,incReward);
     }
 
     /// @notice Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens and FLAKE rewards.
-    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) public {
+    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) nonReentrant external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
         uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         ////////////////////////////////////////////////////////////////////////
         //get the reward after boost
-        uint256 boostedReward = _pendingFlake;
-        uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(pid,msg.sender,user.amount,_pendingFlake);
-        if(teamRoyalty>0) {
-            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
-        }
-
-        if(_pendingFlake>boostedReward) {
-            boostedReward = _pendingFlake.sub(boostedReward);
-        }
+        uint256 incReward = 0;
+        (_pendingFlake,incReward) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
         //////////////////////////////////////////////////////////////////////////
         // Effects
         user.rewardDebt = accumulatedFlake.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
@@ -356,7 +346,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
         lpToken[pid].safeTransfer(to, amount);
 
         emit Withdraw(msg.sender, pid, amount, to);
-        emit Harvest(msg.sender, pid, _pendingFlake,boostedReward);
+        emit Harvest(msg.sender, pid, _pendingFlake,incReward);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -383,16 +373,32 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable/*,proxyOwner*/ {
         booster = IBoost(_booster);
     }
 
-    function boostDeposit(uint256 _pid,uint256 _amount) external {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,uint256 _pendingFlake,uint256 _userLpAmount) internal returns(uint256,uint256) {
+        uint256 incReward = _pendingFlake;
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,msg.sender,_userLpAmount,_pendingFlake);
+        //for team royalty
+        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
+            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
+        }
+
+        if(_pendingFlake>incReward) {
+            incReward = _pendingFlake.sub(incReward);
+        }
+
+        return (_pendingFlake,incReward);
+    }
+
+    function boostDeposit(uint256 _pid,uint256 _amount) nonReentrant external {
         booster.boostDeposit(_pid,msg.sender,_amount);
         FLAKE.safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
-    function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
+    function boostApplyWithdraw(uint256 _pid,uint256 _amount) nonReentrant external {
         booster.boostApplyWithdraw(_pid,msg.sender,_amount);
     }
 
-    function boostWithdraw(uint256 _pid) external {
+    function boostWithdraw(uint256 _pid) nonReentrant external {
         booster.boostWithdraw(_pid,msg.sender);
     }
 

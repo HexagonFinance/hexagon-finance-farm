@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
@@ -178,7 +180,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         }
     }
 
-    function boostDeposit(uint256 _pid,address _account,uint256 _amount) nonReentrant external {
+    function boostDeposit(uint256 _pid,address _account,uint256 _amount) external {
         require(msg.sender==farmChef,"have no permission");
 
         require(boostPara[_pid].enableTokenBoost,"pool is not allow boost");
@@ -189,7 +191,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         emit BoostDeposit(_pid,_account,_amount);
     }
 
-    function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) nonReentrant external{
+    function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) external{
         require(msg.sender==farmChef,"have no permission");
 
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
@@ -199,8 +201,9 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         emit BoostApplyWithdraw(_pid,_account, _amount);
     }
 
-    function boostWithdraw(uint256 _pid,address _account) external nonReentrant{
+    function boostWithdraw(uint256 _pid,address _account) external {
         require(msg.sender==farmChef,"have no permission");
+
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
         (uint256 amount,uint256 index) = boostWithdrawPendingFor(_pid,_account);
 

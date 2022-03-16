@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity 0.6.12;
 
 import "../libraries/Halt.sol";
-import "../libraries/ReentrancyGuard.sol";
 
-contract hexagonBoostStorage is Halt, ReentrancyGuard{
+contract hexagonBoostStorage is Halt {
     address public safeMulsig;
     address public farmChef;
     uint256 public RATIO_DENOM = 1000;
