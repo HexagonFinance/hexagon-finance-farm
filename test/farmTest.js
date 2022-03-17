@@ -13,6 +13,7 @@ describe("MiniChefV2", function () {
     await lpToken.deployed();
     const minichef = await MiniChefV2.deploy(owner.getAddress(),flake.address);
     await minichef.deployed();
+    await minichef.setFlakePerSecond("1000000000");
     await minichef.add("10000", lpToken.address, nullAddress);
     await lpToken.approve(minichef.address,"1000000000");
     await minichef.deposit("0","1000000000",addr1.address);
