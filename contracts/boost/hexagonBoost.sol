@@ -100,7 +100,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
        uint256  tokenBoostAmount = 0;
        if(isTokenBoost(_pid)) {
-           tokenBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
+           tokenBoostAmount = getUserBoostIncAmount(_pid,_user,_baseamount);
        }
 
        uint256 totalBoostAmount = _baseamount.add(whiteListBoostAmount).add(tokenBoostAmount);

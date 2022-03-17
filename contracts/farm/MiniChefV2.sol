@@ -8,7 +8,6 @@ import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SignedSafeMath.sol";
 import "../libraries/proxyOwner.sol";
-import "../libraries/ReentrancyGuard.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
@@ -25,7 +24,7 @@ interface IMigratorChef {
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwner*/ {
+contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     using BoringMath for uint256;
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
@@ -291,7 +290,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of FLAKE rewards.
-    function harvest(uint256 pid, address to) nonReentrant external {
+    function harvest(uint256 pid, address to) external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
@@ -328,7 +327,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens and FLAKE rewards.
-    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) nonReentrant external {
+    function withdrawAndHarvest(uint256 pid, uint256 amount, address to) external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
@@ -391,24 +390,20 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable,ReentrancyGuard/*,proxyOwn
         uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
         (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,msg.sender,_userLpAmount,_pendingFlake);
-
-        if(_pendingFlake>incReward) {
-            incReward = _pendingFlake.sub(incReward);
-        }
-
+        incReward = _pendingFlake.sub(incReward);
         return (_pendingFlake,incReward,teamRoyalty);
     }
 
-    function boostDeposit(uint256 _pid,uint256 _amount) nonReentrant external {
+    function boostDeposit(uint256 _pid,uint256 _amount) external {
         booster.boostDeposit(_pid,msg.sender,_amount);
         FLAKE.safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
-    function boostApplyWithdraw(uint256 _pid,uint256 _amount) nonReentrant external {
+    function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
         booster.boostApplyWithdraw(_pid,msg.sender,_amount);
     }
 
-    function boostWithdraw(uint256 _pid) nonReentrant external {
+    function boostWithdraw(uint256 _pid) external {
         booster.boostWithdraw(_pid,msg.sender);
     }
 
