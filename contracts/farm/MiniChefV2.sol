@@ -218,7 +218,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function onTransfer(uint256 pid,address from,address to) external {
         //check sender permission
-        require(address(lpGauges[pid])==msg.sender,"have no permission!");
+//        require(address(lpGauges[pid])==msg.sender,"have no permission!");
 
         PoolInfo memory pool = updatePool(pid);
         onBalanceChange(pool,pid,from);
