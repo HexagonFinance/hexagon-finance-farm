@@ -4,6 +4,7 @@ verify/
 .idea/
 logs/
 artifacts/
+cache/
 # python compiled bytecode
 *.pyc
 

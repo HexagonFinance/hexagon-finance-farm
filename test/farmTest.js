@@ -22,14 +22,18 @@ describe("MiniChefV2", function () {
     let balance0 = await gauge.balanceOf(owner.address);
     let balance1 = await gauge.balanceOf(addr1.address);
     console.log("balance",balance0.toNumber(),balance1.toNumber());
-    let userInfo = await minichef.userInfo(0,owner.address);
-    console.log("userInfo",userInfo);
-    userInfo = await minichef.userInfo(0,addr1.address);
-    console.log("userInfo",userInfo);
+    await logUserInfo(minichef,owner,addr1);
     await gauge.connect(addr1).transfer(owner.address,"1000000000");
-    userInfo = await minichef.userInfo(0,owner.address);
-    console.log("userInfo",userInfo);
-    userInfo = await minichef.userInfo(0,addr1.address);
-    console.log("userInfo",userInfo);
+    await logUserInfo(minichef,owner,addr1);
+    await gauge.transfer(addr1.address,"1000000000");
+    await logUserInfo(minichef,owner,addr1);
   });
+  async function logUserInfo(minichef,owner,addr1){
+    let userInfo = await minichef.userInfo(0,owner.address);
+    let balance = await minichef.pendingFlake(0,owner.address);
+    console.log("owner userInfo",balance.toNumber(),userInfo);
+    userInfo = await minichef.userInfo(0,addr1.address);
+    balance = await minichef.pendingFlake(0,addr1.address);
+    console.log("addr1 userInfo",balance.toNumber(),userInfo);
+  }
 });
