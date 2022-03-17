@@ -387,6 +387,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     }
 
     function boostRewardAndGetTeamRoyalty(uint256 _pid,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+        if(address(booster)==address(0)) {
+            return (_pendingFlake,0,0);
+        }
+
         uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
         (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,msg.sender,_userLpAmount,_pendingFlake);
@@ -395,23 +399,28 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {
+        require(address(booster)!=address(0),"booster is not set");
         booster.boostDeposit(_pid,msg.sender,_amount);
         FLAKE.safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
     function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
+        require(address(booster)!=address(0),"booster is not set");
         booster.boostApplyWithdraw(_pid,msg.sender,_amount);
     }
 
     function boostWithdraw(uint256 _pid) external {
+        require(address(booster)!=address(0),"booster is not set");
         booster.boostWithdraw(_pid,msg.sender);
     }
 
     function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
+        require(address(booster)!=address(0),"booster is not set");
         booster.boostStakedFor(_pid,_account);
     }
 
     function boostTotalStaked(uint256 _pid) external view returns (uint256) {
+        require(address(booster)!=address(0),"booster is not set");
         booster.boostTotalStaked(_pid);
     }
 
