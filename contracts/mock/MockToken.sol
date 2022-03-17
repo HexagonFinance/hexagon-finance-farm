@@ -16,7 +16,6 @@ contract MockToken is ERC20, Ownable {
         decimal = _decimal;
     }
 
-    /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (WanSwapFarm).
     function mint(address _to, uint256 _amount) public {
         _mint(_to, _amount);
     }

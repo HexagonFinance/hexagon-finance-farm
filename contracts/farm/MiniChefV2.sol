@@ -186,7 +186,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
 
         ///////////////////////////////////////////////////////////////////////////
-        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,user.amount,pending);
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -299,7 +299,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         //get the reward after boost
         uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount,_pendingFlake);
         //for team royalty
         if(teamRoyalty>0&&royaltyReciever!=address(0)) {
             FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
@@ -336,7 +336,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         //get the reward after boost
         uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,user.amount,_pendingFlake);
+        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount,_pendingFlake);
         //for team royalty
         if(teamRoyalty>0&&royaltyReciever!=address(0)) {
             FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
@@ -386,14 +386,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         booster = IBoost(_booster);
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
         if(address(booster)==address(0)) {
             return (_pendingFlake,0,0);
         }
 
         uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,msg.sender,_userLpAmount,_pendingFlake);
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
         incReward = _pendingFlake.sub(incReward);
         return (_pendingFlake,incReward,teamRoyalty);
     }
