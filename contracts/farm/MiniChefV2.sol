@@ -268,15 +268,15 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     /// @param to Receiver of the LP tokens.
     function withdraw(uint256 pid, uint256 amount, address to) public {
         PoolInfo memory pool = updatePool(pid);
-        withdrawPending(pool,pid,amount,to);
+        withdrawPending(pool,pid,amount,msg.sender);
         lpGauges[pid].burn(msg.sender,amount);
         lpToken[pid].safeTransfer(to, amount);
 
         emit Withdraw(msg.sender, pid, amount, to);
     }
 
-    function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to) internal {
-        UserInfo storage user = userInfo[pid][msg.sender];
+    function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address _usr) internal {
+        UserInfo storage user = userInfo[pid][_usr];
         // Effects
         user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
         user.amount = user.amount.sub(amount);
@@ -284,7 +284,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, msg.sender, to, 0, user.amount,false);
+            _rewarder.onFlakeReward(pid, _usr, _usr, 0, user.amount,false);
         }
     }
     /// @notice Harvest proceeds for transaction sender to `to`.

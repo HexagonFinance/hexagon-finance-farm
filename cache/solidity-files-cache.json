@@ -1,0 +1,1283 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\boost\\hexagonBoost.sol": {
+      "lastModificationDate": 1647515296395,
+      "contentHash": "60b30f39b02e599ea98acdf1dfd1a727",
+      "sourceName": "contracts/boost/hexagonBoost.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "../libraries/SafeMath.sol",
+        "../libraries/proxyOwner.sol",
+        "./hexagonBoostStorage.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "hexagonBoost"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\@boringcrypto\\boring-solidity\\contracts\\libraries\\BoringMath.sol": {
+      "lastModificationDate": 1647313527895,
+      "contentHash": "880eac69aa64dae6e3b5585d6b1164cc",
+      "sourceName": "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BoringMath",
+        "BoringMath128",
+        "BoringMath32",
+        "BoringMath64"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\@boringcrypto\\boring-solidity\\contracts\\BoringBatchable.sol": {
+      "lastModificationDate": 1647313527893,
+      "contentHash": "64e4fb4508b3991be44578643e52fb11",
+      "sourceName": "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./libraries/BoringERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BaseBoringBatchable",
+        "BoringBatchable"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\@boringcrypto\\boring-solidity\\contracts\\BoringOwnable.sol": {
+      "lastModificationDate": 1647313527895,
+      "contentHash": "4346e0680c1e891cb927a5c507248bcd",
+      "sourceName": "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BoringOwnable",
+        "BoringOwnableData"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\SafeMath.sol": {
+      "lastModificationDate": 1647341163007,
+      "contentHash": "c52696353d038a4e009cd055f3b5897b",
+      "sourceName": "contracts/libraries/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "SafeMath",
+        "SafeMath128"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\proxyOwner.sol": {
+      "lastModificationDate": 1647425683236,
+      "contentHash": "6479ce446a90a85aa987e5ef5d192f53",
+      "sourceName": "contracts/libraries/proxyOwner.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./multiSignatureClient.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "proxyOwner"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\boost\\hexagonBoostStorage.sol": {
+      "lastModificationDate": 1647425683233,
+      "contentHash": "6e135eb87c7a34154d7d7c0a3dc8423a",
+      "sourceName": "contracts/boost/hexagonBoostStorage.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../libraries/Halt.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "hexagonBoostStorage"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\@boringcrypto\\boring-solidity\\contracts\\libraries\\BoringERC20.sol": {
+      "lastModificationDate": 1647313527895,
+      "contentHash": "a4d43d9bcdfe02388479f9397ee036e1",
+      "sourceName": "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "BoringERC20"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\@boringcrypto\\boring-solidity\\contracts\\interfaces\\IERC20.sol": {
+      "lastModificationDate": 1647313527902,
+      "contentHash": "42230f2725522218364239f02170f9bc",
+      "sourceName": "@boringcrypto/boring-solidity/contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\multiSignatureClient.sol": {
+      "lastModificationDate": 1647425683236,
+      "contentHash": "e480d6076d3853ba5f133df5bf38bc55",
+      "sourceName": "contracts/libraries/multiSignatureClient.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IMultiSignature",
+        "multiSignatureClient"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\Halt.sol": {
+      "lastModificationDate": 1647425683235,
+      "contentHash": "b99ae53c5074bdde44b7b379b6fce10d",
+      "sourceName": "contracts/libraries/Halt.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./Ownable.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "Halt"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\Ownable.sol": {
+      "lastModificationDate": 1647425683235,
+      "contentHash": "4eaf3235555f461a166a8e2dafa4bef8",
+      "sourceName": "contracts/libraries/Ownable.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "Ownable"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\farm\\MiniChefV2.sol": {
+      "lastModificationDate": 1647515377011,
+      "contentHash": "fc1d521893b67c766df2445b2156e8df",
+      "sourceName": "contracts/farm/MiniChefV2.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "../libraries/SignedSafeMath.sol",
+        "../libraries/proxyOwner.sol",
+        "../interfaces/IRewarder.sol",
+        "./lpGauge.sol",
+        "../interfaces/IBoost.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IMigratorChef",
+        "MiniChefV2"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\SignedSafeMath.sol": {
+      "lastModificationDate": 1647251671963,
+      "contentHash": "55ff2b58bfe9454442661a5d331c78a5",
+      "sourceName": "contracts/libraries/SignedSafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "SignedSafeMath"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\ReentrancyGuard.sol": {
+      "lastModificationDate": 1647425683235,
+      "contentHash": "20cf69d3d1797126ad6f1ee27e197286",
+      "sourceName": "contracts/libraries/ReentrancyGuard.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ReentrancyGuard"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\interfaces\\IRewarder.sol": {
+      "lastModificationDate": 1647425683234,
+      "contentHash": "39ef0c1fb9f80be2120a4d5b9dce3a75",
+      "sourceName": "contracts/interfaces/IRewarder.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IRewarder"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\farm\\lpGauge.sol": {
+      "lastModificationDate": 1647425683233,
+      "contentHash": "db527b8b980e94533d5747517dbda1e3",
+      "sourceName": "contracts/farm/lpGauge.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "../interfaces/IMiniChefV2.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "lpGauge"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\interfaces\\IBoost.sol": {
+      "lastModificationDate": 1647425683234,
+      "contentHash": "25bca00fb381b94a21b248c815c4ab27",
+      "sourceName": "contracts/interfaces/IBoost.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IBoost"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\interfaces\\IMiniChefV2.sol": {
+      "lastModificationDate": 1647425683234,
+      "contentHash": "e2a59bf59f4da4653d93e36c83685f7e",
+      "sourceName": "contracts/interfaces/IMiniChefV2.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IMiniChefV2"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\MultiRewarderTime.sol": {
+      "lastModificationDate": 1647425683238,
+      "contentHash": "8951c1a542903ccbfa3a278074dd79a3",
+      "sourceName": "contracts/rewarder/MultiRewarderTime.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IRewarder.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "./IMiniChefPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "MultiRewarderTime"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\IMiniChefPool.sol": {
+      "lastModificationDate": 1647314603064,
+      "contentHash": "c47d480fb08eb7f9c34b01de3b4eed1a",
+      "sourceName": "contracts/rewarder/IMiniChefPool.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IMiniChefPool"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\ComplexRewarderTime.sol": {
+      "lastModificationDate": 1647425683237,
+      "contentHash": "0bd132f1cc12ffba1fe30bb3e8fb2a83",
+      "sourceName": "contracts/rewarder/ComplexRewarderTime.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IRewarder.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "./IMiniChefPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ComplexRewarderTime"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\ComplexRewarder.sol": {
+      "lastModificationDate": 1647425683237,
+      "contentHash": "c6394be1792ef94bc0467bc786f91f78",
+      "sourceName": "contracts/rewarder/ComplexRewarder.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IRewarder.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "./IMiniChefPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ComplexRewarder"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\CloneRewarderTimeDual.sol": {
+      "lastModificationDate": 1647425683237,
+      "contentHash": "1db186c8543b8bf861dae88e2efdaf2e",
+      "sourceName": "contracts/rewarder/CloneRewarderTimeDual.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IRewarder.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "./IMiniChefPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "CloneRewarderTimeDual"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\rewarder\\CloneRewarderTime.sol": {
+      "lastModificationDate": 1647425683236,
+      "contentHash": "5e8877d60ecb85e401d9858fc45f2c65",
+      "sourceName": "contracts/rewarder/CloneRewarderTime.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IRewarder.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol",
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol",
+        "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol",
+        "./IMiniChefPool.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "CloneRewarderTime"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\interfaces\\IMasterChef.sol": {
+      "lastModificationDate": 1647425683234,
+      "contentHash": "3c9746760ab1f70a990c9a8a91164355",
+      "sourceName": "contracts/interfaces/IMasterChef.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IMasterChef"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\multiSignature.sol": {
+      "lastModificationDate": 1647425683235,
+      "contentHash": "59c4eac2b91ac6b66c07f7afa95e6d78",
+      "sourceName": "contracts/libraries/multiSignature.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./multiSignatureClient.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "multiSignature",
+        "whiteListAddress"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\interfaces\\IERC20.sol": {
+      "lastModificationDate": 1647251671962,
+      "contentHash": "42230f2725522218364239f02170f9bc",
+      "sourceName": "contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\libraries\\SafeERC20.sol": {
+      "lastModificationDate": 1647251671963,
+      "contentHash": "63aa04d4a5626cb649e8e23906f20ddd",
+      "sourceName": "contracts/libraries/SafeERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../interfaces/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "SafeERC20"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\node_modules\\hardhat\\console.sol": {
+      "lastModificationDate": 1647426030037,
+      "contentHash": "cc4777addd464ea56fa35b1c45df0591",
+      "sourceName": "hardhat/console.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.22 <0.9.0"
+      ],
+      "artifacts": [
+        "console"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\mock\\MockToken.sol": {
+      "lastModificationDate": 1647515296396,
+      "contentHash": "6102e4f0a196744af0ef65657e7607a6",
+      "sourceName": "contracts/mock/MockToken.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../flake/ERC20.sol",
+        "../libraries/Ownable.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "MockToken"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\flake\\ERC20.sol": {
+      "lastModificationDate": 1647515296396,
+      "contentHash": "f835c6294cbb02b8ec5936939ae3797f",
+      "sourceName": "contracts/flake/ERC20.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../libraries/SafeMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ERC20"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\flake\\FlakeToken.sol": {
+      "lastModificationDate": 1647515296396,
+      "contentHash": "5b92b880ac258312baa252162b5063bb",
+      "sourceName": "contracts/flake/FlakeToken.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "./ERC20.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "FlakeToken"
+      ]
+    },
+    "D:\\work\\solidity\\hexagon-finance-farm\\contracts\\mock\\ERC20Mock.sol": {
+      "lastModificationDate": 1647515568026,
+      "contentHash": "4daeb78e147fa7ac15c68232efa1f944",
+      "sourceName": "contracts/mock/ERC20Mock.sol",
+      "solcConfig": {
+        "version": "0.6.12",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol"
+      ],
+      "versionPragmas": [
+        "0.6.12"
+      ],
+      "artifacts": [
+        "ERC20Mock",
+        "Erc20Data"
+      ]
+    }
+  }
+}
