@@ -172,8 +172,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     /// @notice View function to see pending FLAKE on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
-    /// @return pending FLAKE reward for a given user.
-    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 pending,uint256 boostamount) {
+    /// return pending FLAKE reward for a given user.
+    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 wholePending,uint256 incAmount,uint256 teamRoyalty) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accFlakePerShare = pool.accFlakePerShare;
@@ -183,10 +183,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
             uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply);
         }
-        pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
+        uint256 pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
 
         ///////////////////////////////////////////////////////////////////////////
-        (pending,boostamount,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
+        (wholePending,incAmount,teamRoyalty) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -390,11 +390,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         if(address(booster)==address(0)) {
             return (_pendingFlake,0,0);
         }
-
-        uint256 incReward = 0;
+        //record init reward
+        uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
-        (incReward,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
-        return (_pendingFlake.add(incReward),incReward,teamRoyalty);
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        //(_pendingFlake+teamRoyalty) is total (boosted reward + init reward)
+        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+
+        return (_pendingFlake,incReward,teamRoyalty);
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {

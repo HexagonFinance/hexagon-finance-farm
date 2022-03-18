@@ -38,6 +38,8 @@ contract('hexgon farm test', function (accounts){
     let staker2 = accounts[3];
     let staker3 = accounts[6];
 
+    let VAL_1 = web3.utils.toWei('1', 'ether');
+
     let VAL_1M = web3.utils.toWei('1000000', 'ether');
     let VAL_10M = web3.utils.toWei('10000000', 'ether');
     let VAL_99M = web3.utils.toWei(  '99999999', 'ether');
@@ -45,7 +47,7 @@ contract('hexgon farm test', function (accounts){
     let VAL_1B = web3.utils.toWei('1000000000', 'ether');
     let VAL_10B = web3.utils.toWei('10000000000', 'ether');
 
-    let WITHTELIST_MINIMUM = VAL_100M ;
+    let WITHTELIST_MINIMUM = VAL_1M ;
 
     let farminst;
     let lp;//stake token
@@ -89,10 +91,10 @@ contract('hexgon farm test', function (accounts){
         res = await farminst.setBooster(booster.address);
         assert.equal(res.receipt.status,true);
 /////////////////////////////////////////////////////////////////////////////
-        res = await booster.setFixedTeamRatio(0,new BN(100));
+        res = await booster.setFixedTeamRatio(0,new BN(100));//10%
         assert.equal(res.receipt.status,true);
 
-        res = await booster.setFixedWhitelistPara(0,new BN(100),WITHTELIST_MINIMUM);
+        res = await booster.setFixedWhitelistPara(0,new BN(100),WITHTELIST_MINIMUM);//10%,
         assert.equal(res.receipt.status,true);
 
         res = await booster.setWhiteList(0,[accounts[8],accounts[9]]);
@@ -131,7 +133,7 @@ contract('hexgon farm test', function (accounts){
          time.increase(1);
 
         let pending = await farminst.pendingFlake(0,staker1);
-        console.log("pending flake",pending[0].toString(10),pending[1].toString(10));
+        console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
 
         //
         // utils.sleep(1000);
