@@ -173,7 +173,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
     /// @return pending FLAKE reward for a given user.
-    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 pending) {
+    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 pending,uint256 boostamount) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accFlakePerShare = pool.accFlakePerShare;
@@ -186,7 +186,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
 
         ///////////////////////////////////////////////////////////////////////////
-        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
+        (pending,boostamount,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -391,11 +391,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
             return (_pendingFlake,0,0);
         }
 
-        uint256 incReward = _pendingFlake;
+        uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
-        incReward = _pendingFlake.sub(incReward);
-        return (_pendingFlake,incReward,teamRoyalty);
+        (incReward,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        return (_pendingFlake.add(incReward),incReward,teamRoyalty);
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {
