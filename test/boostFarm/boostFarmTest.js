@@ -61,10 +61,14 @@ contract('hexgon farm test', function (accounts){
 
 /////////////////////////////reward token///////////////////////////////////////////
         flake = await FlakeToken.new("flake token","flake",18);
+
         boostToken = await BoostToken.new("boost token","boost",18);
+        await boostToken.mint(staker1,VAL_1B);
+        await boostToken.mint(staker2,VAL_1B);
+        await boostToken.mint(staker3,VAL_1B);
+
 //set farm///////////////////////////////////////////////////////////
         farminst = await MinePool.new(accounts[0],flake.address);
-
         console.log("pool address:", farminst.address);
 
         res = await farminst.add(new BN(100),
@@ -76,6 +80,9 @@ contract('hexgon farm test', function (accounts){
 
         res = await farminst.setFlakePerSecond(rewardPerSec);
         assert.equal(res.receipt.status,true);
+
+        await flake.mint(farminst.address,VAL_1B);
+
 //set boost//////////////////////////////////////////////////////////////////
         booster = await BoostSc.new(accounts[0],farminst.address);
 //////////////////////////////////////////////////////////////////////////////
@@ -101,35 +108,31 @@ contract('hexgon farm test', function (accounts){
                                                     enableTokenBoost,    //bool    _enableTokenBoost,
                                                     flake.address     //address _boostToken
                                                 );
+
         assert.equal(res.receipt.status,true);
 
     })
 
-    it("[0010] stake in,should pass", async()=>{
+    it("[0010] stake lp in farm pool,should pass", async()=>{
+         let poolInfo = await farminst.poolInfo(0);
+         console.log(poolInfo);
+        // console.log(mineInfo[0].toString(10),mineInfo[1].toString(10),
+        //     mineInfo[2].toString(10),mineInfo[3].toString(10));
 
         // ////////////////////////staker1///////////////////////////////////////////////////////////
-        // res = await lp.approve(farmproxyinst.address,VAL_1B,{from:staker1});
-        // assert.equal(res.receipt.status,true);
-        //
-        // res = await lp.approve(farmproxyinst.address,VAL_1B,{from:staker2});
-        // assert.equal(res.receipt.status,true);
-        //
-        // res = await lp.approve(farmproxyinst.address,VAL_1B,{from:staker3});
-        // assert.equal(res.receipt.status,true);
-        //
-        // // res = await lp.approve(joeStakeRewardInt.address,VAL_1M,{from:staker1});
-        // // assert.equal(res.receipt.status,true);
-        //
-        // time.increaseTo(startTime+100);
-        //
-        // let preBal = await pngInst.balanceOf(farmproxyinst.address);
-        // console.log("prebalance=",preBal.toString(10));
-        // res = await farmproxyinst.deposit(0,VAL_100M,{from:staker1});
-        // assert.equal(res.receipt.status,true);
-        //
-        // utils.sleep(1000);
-        // res = await farmproxyinst.deposit(0,VAL_100M,{from:staker2});
-        // assert.equal(res.receipt.status,true);
+         res = await lp.approve(farminst.address,VAL_1B,{from:staker1});
+         assert.equal(res.receipt.status,true);
+
+
+         let preBal = await lp.balanceOf(farminst.address);
+         console.log("prebalance=",preBal.toString(10));
+         res = await farminst.deposit(0,VAL_100M,staker1,{from:staker1});
+         assert.equal(res.receipt.status,true);
+         time.increase(1);
+
+        let pending = await farminst.pendingFlake(0,staker1);
+        console.log("pending flake",pending[0].toString(10),pending[1].toString(10));
+
         //
         // utils.sleep(1000);
         // res = await farmproxyinst.deposit(0,VAL_99M,{from:staker3});
@@ -138,9 +141,7 @@ contract('hexgon farm test', function (accounts){
         // let afterBal = await pngInst.balanceOf(farmproxyinst.address);
         // console.log("afterbalance=",afterBal.toString(10));
         //
-        // let mineInfo = await farmproxyinst.getMineInfo(0);
-        // console.log(mineInfo[0].toString(10),mineInfo[1].toString(10),
-        //     mineInfo[2].toString(10),mineInfo[3].toString(10));
+
         //
         // let block = await web3.eth.getBlock(mineInfo[2]);
         // console.log("start block time",block.timestamp);
