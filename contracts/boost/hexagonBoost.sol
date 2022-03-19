@@ -238,6 +238,10 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         }
 
         uint256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,currentTime());
+        if(index==0&&userPendings.pendingAry[0].releaseTime<currentTime()) {
+            return (userPendings.pendingAry[0].pendingAmount,0);
+        }
+
         //control tx num lower than 200
         if(index-userPendings.firstIndex>200) {
             index = userPendings.firstIndex+200;
@@ -310,7 +314,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     {
         uint256 length = pendingAry.length;
         //if first idx release time is not passed,return directly
-        if(pendingAry[firstIndex].releaseTime >= searchTime) {
+        if(pendingAry[firstIndex].releaseTime > searchTime) {
             return firstIndex;
         }
 
@@ -327,7 +331,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             if (pendingAry[mid].releaseTime < searchTime) {
                 min = mid;
                 //[i]<searchTime<=[i+1]
-                if(pendingAry[mid+1].releaseTime>=searchTime) {
+                if(pendingAry[mid+1].releaseTime>searchTime) {
                     //outer use <, not include
                     mid = mid+1;
                     break;
