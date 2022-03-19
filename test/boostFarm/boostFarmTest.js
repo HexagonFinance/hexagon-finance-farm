@@ -10,7 +10,7 @@ const BoostSc = artifacts.require("hexagonBoost");
 const assert = require('chai').assert;
 const Web3 = require('web3');
 
-const BN = require("bn.js");
+const BN = require("bignumber.js");
 var utils = require('./utils.js');
 web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
 
@@ -154,18 +154,6 @@ contract('hexgon farm test', function (accounts){
 
     it("[0020] withdraw reward,should pass", async()=>{
         await havestTest(staker1);
-        // let preBal = await flake.balanceOf(staker1);
-        // console.log("prebalance=",preBal.toString(10));
-        //
-        // res = await farminst.harvest(0,staker1,{from:staker1});
-        // assert.equal(res.receipt.status,true);
-        //
-        // let afterBal = await flake.balanceOf(staker1);
-        // console.log("afterbalance=",afterBal.toString(10));
-        //
-        // let diff = web3.utils.fromWei(afterBal) - web3.utils.fromWei(preBal);
-        //
-        // console.log("reward get:",diff);
     })
 
     it("[0030] boost token ,should pass", async()=>{
@@ -176,7 +164,7 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
 
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
-        console.log(tokenBoostRatio[0].toString(10),tokenBoostRatio[0].toString(10))
+        console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
         assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
 
         let pending = await farminst.pendingFlake(0,staker1);
