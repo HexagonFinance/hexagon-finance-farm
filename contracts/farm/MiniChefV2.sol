@@ -403,6 +403,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function boostDeposit(uint256 _pid,uint256 _amount) external {
         require(address(booster)!=address(0),"booster is not set");
         booster.boostDeposit(_pid,msg.sender,_amount);
+
         address boostToken = booster.getBoostToken(_pid);
         IERC20(boostToken).safeTransferFrom(msg.sender,address(booster), _amount);
     }
@@ -419,22 +420,22 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
         require(address(booster)!=address(0),"booster is not set");
-        booster.boostStakedFor(_pid,_account);
+        return booster.boostStakedFor(_pid,_account);
     }
 
     function boostTotalStaked(uint256 _pid) external view returns (uint256) {
         require(address(booster)!=address(0),"booster is not set");
-        booster.boostTotalStaked(_pid);
+        return booster.boostTotalStaked(_pid);
     }
 
-    function boostTotalWithdrawPending(uint256 _pid,address _account) external view returns (uint256) {
+    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256) {
         require(address(booster)!=address(0),"booster is not set");
-        booster.boostTotalWithdrawPending(_pid,_account);
+        return booster.boostTotalWithdrawPendingFor(_pid,_account);
     }
 
     function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256,uint256) {
         require(address(booster)!=address(0),"booster is not set");
-        booster.boostAvailableWithdrawPendingFor(_pid,_account);
+        return booster.boostAvailableWithdrawPendingFor(_pid,_account);
     }
 
 

@@ -188,8 +188,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
     function boostDeposit(uint256 _pid,address _account,uint256 _amount) external {
         require(msg.sender==farmChef,"have no permission");
-
         require(boostPara[_pid].enableTokenBoost,"pool is not allow boost");
+
         totalsupplies[_pid] = totalsupplies[_pid].add(_amount);
         balances[_pid][_account] = balances[_pid][_account].add(_amount);
 
@@ -203,7 +203,9 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
         userUnstakePending[_pid][_account].pendingAry.push(pendingItem(uint192(_amount),unlockTime));
+
         userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.add(_amount);
+
         emit BoostApplyWithdraw(_pid,_account, _amount);
     }
 
@@ -252,7 +254,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         return balances[_pid][_account];
     }
 
-    function boostTotalWithdrawPending(uint256 _pid,address _account) external view returns (uint256) {
+    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256) {
         return userUnstakePending[_pid][_account].totalPending;
     }
 
@@ -270,6 +272,31 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
     function isTeamRoyalty(uint256 _pid) public view returns (bool){
         return  boostPara[_pid].fixedTeamRatio>0;
+    }
+
+    function boostWithdrawPendingLength(uint256 _pid,address _account) public view returns (uint256) {
+        return userUnstakePending[_pid][_account].pendingAry.length;
+    }
+
+    function boostWithdrawPendingRecord(uint256 _pid,address _account,uint256 _startIdx,uint256 _endIdx) public view returns (uint256[] memory,uint256[] memory) {
+        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
+        uint256 arrayLen = userPendings.pendingAry.length;
+        require(_endIdx>_startIdx,"bad idx,start is bigger than end");
+        require(_endIdx<arrayLen,"end idx too big");
+        if(_endIdx==0) {
+            _endIdx = arrayLen - 1;
+        }
+        uint256 len = _endIdx - _startIdx;
+        uint256[] memory amountArray = new uint256[](len);
+        uint256[] memory timeArray = new uint256[](len);
+
+        uint256 i=0;
+        for(;i<len;i++) {
+            amountArray[i] = userPendings.pendingAry[i+_startIdx].pendingAmount;
+            timeArray[i] = userPendings.pendingAry[i+_startIdx].pendingAmount;
+        }
+
+        return (amountArray,timeArray);
     }
 
     function currentTime() internal view returns(uint64){

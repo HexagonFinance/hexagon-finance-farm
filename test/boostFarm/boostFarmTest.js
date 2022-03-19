@@ -29,7 +29,7 @@ contract('hexgon farm test', function (accounts){
     let boostTokenStepAmount = new BN("1000000000000000000000");     //uint256 _boostTokenStepAmount,1000 ether
     let ratioIncreaseStep = new BN("10000000000000000000");// uint256 _ratioIncreaseStep,1%
     let maxIncRatio = new BN("4500000000000000000000");//uint256 _maxIncRatio,4.5
-    let lockTime =  new BN(""+3600*24);//uint256 _lockTime,
+    let lockTime =  new BN(""+30*3600*24);//uint256 _lockTime,
     let enableTokenBoost = true;    //bool    _enableTokenBoost,
     let boostToken;   //address _boostToken
 
@@ -42,7 +42,8 @@ contract('hexgon farm test', function (accounts){
     let VAL_1000 =  web3.utils.toWei('1000', 'ether');
     let VAL_2800 =  web3.utils.toWei('2800', 'ether');
     let VAL_10000 =  web3.utils.toWei('10000', 'ether');
-    let VAL_430000 =  web3.utils.toWei('43000', 'ether');
+    let VAL_448000 =  web3.utils.toWei('448000', 'ether');
+    let VAL_548000 =  web3.utils.toWei('548000', 'ether');
 
     let VAL_1M = web3.utils.toWei('1000000', 'ether');
     let VAL_10M = web3.utils.toWei('10000000', 'ether');
@@ -192,5 +193,44 @@ contract('hexgon farm test', function (accounts){
 
         await havestTest(staker1);
     })
+
+    it("[0050] boost token deposit again,max ratio,should pass", async()=>{
+        res = await farminst.boostDeposit(0,VAL_448000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
+
+        let pending = await farminst.pendingFlake(0,staker1);
+        console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
+
+        let boostTokenAmount = await boostToken.balanceOf(booster.address);
+        console.log("boost token amount",boostTokenAmount.toString(10));
+       // assert.equal(new BN(VAL_1000.toString(10)).plus(new BN(VAL_2800.toString(10))).toString(10),boostTokenAmount.toString(10),"boost token should be same");
+
+        await havestTest(staker1);
+    })
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+    it("[0060] apply withdraw boost token ,should pass", async()=>{
+        let staked = await farminst.boostStakedFor(0,staker1);
+        console.log("user total staked amount",staked.toString(10));//web3.utils.fromWei(staked.toString(10)));
+
+        let res = await farminst.boostApplyWithdraw(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+        time.increase(24*3600);
+
+        let wholePending = await farminst.boostTotalWithdrawPendingFor(0,staker1);
+        console.log(" user withdraw total pending",web3.utils.fromWei(wholePending));
+        utils.sleep(1000);
+
+        let avlaiblePending = await farminst.boostAvailableWithdrawPendingFor(0,staker1);
+        console.log("user available withdraw pending",web3.utils.fromWei(avlaiblePending[0]));
+
+        res = await farminst.boostApplyWithdraw(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+        time.increase(24*3600);
+    })
+
 
 })
