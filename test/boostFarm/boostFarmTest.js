@@ -39,6 +39,9 @@ contract('hexgon farm test', function (accounts){
     let staker3 = accounts[6];
 
     let VAL_1 = web3.utils.toWei('1', 'ether');
+    let VAL_1000 =  web3.utils.toWei('1000', 'ether');
+    let VAL_10000 =  web3.utils.toWei('10000', 'ether');
+    let VAL_430000 =  web3.utils.toWei('43000', 'ether');
 
     let VAL_1M = web3.utils.toWei('1000000', 'ether');
     let VAL_10M = web3.utils.toWei('10000000', 'ether');
@@ -108,7 +111,7 @@ contract('hexgon farm test', function (accounts){
                                                     maxIncRatio,//uint256 _maxIncRatio,4.5
                                                     lockTime,//uint256 _lockTime,
                                                     enableTokenBoost,    //bool    _enableTokenBoost,
-                                                    flake.address     //address _boostToken
+                                                    boostToken.address     //address _boostToken
                                                 );
 
         assert.equal(res.receipt.status,true);
@@ -146,6 +149,20 @@ contract('hexgon farm test', function (accounts){
         let diff = web3.utils.fromWei(afterBal) - web3.utils.fromWei(preBal);
 
         console.log("reward get:",diff);
+    })
+
+    it("[0030] boost token ,should pass", async()=>{
+        res = await boostToken.approve(farminst.address,VAL_1B,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        res = await farminst.boostDeposit(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        console.log(tokenBoostRatio[0].toString(10),tokenBoostRatio[0].toString(10))
+
+        let pending = await farminst.pendingFlake(0,staker1);
+        console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
     })
 
 })

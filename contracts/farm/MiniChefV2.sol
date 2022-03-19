@@ -403,7 +403,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function boostDeposit(uint256 _pid,uint256 _amount) external {
         require(address(booster)!=address(0),"booster is not set");
         booster.boostDeposit(_pid,msg.sender,_amount);
-        FLAKE.safeTransferFrom(msg.sender,address(booster), _amount);
+        address boostToken = booster.getBoostToken(_pid);
+        IERC20(boostToken).safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
     function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {

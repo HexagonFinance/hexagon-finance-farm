@@ -157,6 +157,12 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         return _baseamount.mul(ratio).div(denom);
     }
 
+    function getBoostToken(uint256 _pid)
+        external view returns(address)
+    {
+        return boostPara[_pid].boostToken;
+    }
+
     function boostRatio(uint256 _pid,uint256 _amount)
         public view returns(uint256,uint256)
     {
@@ -187,7 +193,6 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         totalsupplies[_pid] = totalsupplies[_pid].add(_amount);
         balances[_pid][_account] = balances[_pid][_account].add(_amount);
 
-        //IERC20(boostPara[_pid].boostToken).safeTransferFrom(_account,address(this), _amount);
         emit BoostDeposit(_pid,_account,_amount);
     }
 
@@ -257,6 +262,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     function isTeamRoyalty(uint256 _pid) public view returns (bool){
         return  boostPara[_pid].fixedTeamRatio>0;
     }
+
+
 
     function currentTime() internal view returns(uint64){
         return uint64(block.timestamp);

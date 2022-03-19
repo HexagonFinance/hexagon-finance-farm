@@ -9,4 +9,5 @@ interface IBoost {
     function boostWithdraw(uint256 _pid,address _account) external;
     function boostStakedFor(uint256 _pid,address _account) external view returns (uint256);
     function boostTotalStaked(uint256 _pid) external view returns (uint256);
+    function getBoostToken(uint256 _pid) external view returns(address);
 }
