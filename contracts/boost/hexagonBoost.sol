@@ -232,16 +232,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
 
-        if( userPendings.pendingAry.length==0
-           ||userPendings.firstIndex>=userPendings.pendingAry.length) {
-            return(0,0);
-        }
-
         uint256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,currentTime());
-        if(index==0&&userPendings.pendingAry[0].releaseTime<currentTime()) {
-            return (userPendings.pendingAry[0].pendingAmount,0);
-        }
-
         //control tx num lower than 200
         if(index-userPendings.firstIndex>200) {
             index = userPendings.firstIndex+200;
@@ -251,6 +242,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         for(uint64 i=userPendings.firstIndex;i<index;i++) {
             amount = amount.add(userPendings.pendingAry[i].pendingAmount);
         }
+
         return (amount,index);
     }
 
@@ -312,35 +304,12 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         pure
         returns (uint256)
     {
-        uint256 length = pendingAry.length;
-        //if first idx release time is not passed,return directly
-        if(pendingAry[firstIndex].releaseTime > searchTime) {
-            return firstIndex;
-        }
-
-        uint256 min = firstIndex;
-        uint256 max = length - 1;
-        uint256 mid = 0;
-
-        while (max > min) {
-            mid = (max + min) / 2;
-            //release time need to be bigger target time
-            if(pendingAry[mid].releaseTime==searchTime) {
-                 break;
-            }
-            if (pendingAry[mid].releaseTime < searchTime) {
-                min = mid;
-                //[i]<searchTime<=[i+1]
-                if(pendingAry[mid+1].releaseTime>searchTime) {
-                    //outer use <, not include
-                    mid = mid+1;
-                    break;
-                }
-            } else {
-                max = mid;
+        uint256 i=firstIndex;
+        for(;i<pendingAry.length;i++) {
+            if(pendingAry[i].releaseTime > searchTime) {
+                break;
             }
         }
-
-        return mid;
+        return i;
     }
 }

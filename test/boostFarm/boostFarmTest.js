@@ -259,6 +259,10 @@ contract('hexgon farm test', function (accounts){
         console.log("user available withdraw pending",web3.utils.fromWei(avlaiblePending[0]),avlaiblePending[1].toString(10));
         assert.equal(web3.utils.fromWei(avlaiblePending[0]),web3.utils.fromWei(VAL_1000)*3,"should be 3000");
 
+        time.increase(30*24*3600);
+        avlaiblePending = await farminst.boostAvailableWithdrawPendingFor(0,staker1);
+        console.log("user available withdraw pending",web3.utils.fromWei(avlaiblePending[0]),avlaiblePending[1].toString(10));
+        assert.equal(web3.utils.fromWei(avlaiblePending[0]),web3.utils.fromWei(VAL_1000)*4,"should be 4000");
     })
 
 })
