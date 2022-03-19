@@ -85,6 +85,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         boostPara[_pid].lockTime = _lockTime;
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
+        boostPara[_pid].emergencyWithdraw = false;
 
         IERC20(boostPara[_pid].boostToken).approve(farmChef,uint256(-1));
     }
@@ -228,7 +229,6 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
 
-
     function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
 
@@ -250,7 +250,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         return balances[_pid][_account];
     }
 
-    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256) {
+    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256) {
         return userUnstakePending[_pid][_account].totalPending;
     }
 
@@ -311,5 +311,24 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             }
         }
         return i;
+    }
+
+    function setEmergencyWithdraw(uint256 _pid,bool _enable) public onlyOrigin {
+        boostPara[_pid].emergencyWithdraw = _enable;
+    }
+
+    function emergencyWithdraw(uint256 _pid, address _to) public {
+        require(boostPara[_pid].emergencyWithdraw,"do not allow");
+
+        pendingGroup storage userPendings = userUnstakePending[_pid][msg.sender];
+        uint256 amount = boostStakedFor(_pid,msg.sender);
+        amount = amount.add(userPendings.totalPending);
+
+        for(uint256 i=userPendings.firstIndex;i<userPendings.pendingAry.length;i++) {
+            userPendings.pendingAry[i].pendingAmount = 0;
+         }
+        userPendings.totalPending = 0;
+        userPendings.firstIndex = uint64(userPendings.pendingAry.length);
+        IERC20(boostPara[_pid].boostToken).safeTransfer(_to, amount);
     }
 }

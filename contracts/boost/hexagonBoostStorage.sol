@@ -44,6 +44,7 @@ contract hexagonBoostStorage is Halt {
         bool enableTokenBoost;
         uint256 lockTime;
         address boostToken;
+        bool emergencyWithdraw;
     }
 
     mapping(uint256=>poolBoostPara) public boostPara;
