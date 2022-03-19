@@ -40,6 +40,7 @@ contract('hexgon farm test', function (accounts){
 
     let VAL_1 = web3.utils.toWei('1', 'ether');
     let VAL_1000 =  web3.utils.toWei('1000', 'ether');
+    let VAL_2800 =  web3.utils.toWei('2800', 'ether');
     let VAL_10000 =  web3.utils.toWei('10000', 'ether');
     let VAL_430000 =  web3.utils.toWei('43000', 'ether');
 
@@ -172,6 +173,22 @@ contract('hexgon farm test', function (accounts){
 
         let boostTokenAmount = await boostToken.balanceOf(booster.address);
         assert.equal(VAL_1000.toString(10),boostTokenAmount.toString(10),"boost token should be same");
+
+        await havestTest(staker1);
+    })
+
+    it("[0040] boost token deposit again,should pass", async()=>{
+        res = await farminst.boostDeposit(0,VAL_2800,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
+
+        let pending = await farminst.pendingFlake(0,staker1);
+        console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
+
+        let boostTokenAmount = await boostToken.balanceOf(booster.address);
+        assert.equal(new BN(VAL_1000.toString(10)).plus(new BN(VAL_2800.toString(10))).toString(10),boostTokenAmount.toString(10),"boost token should be same");
 
         await havestTest(staker1);
     })
