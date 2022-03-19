@@ -22,6 +22,7 @@ contract hexagonBoostStorage is Halt {
     struct pendingGroup {
         pendingItem[] pendingAry;
         uint64 firstIndex;
+        uint256 totalPending;
     }
 
     //pid => user => token release time for withdraw

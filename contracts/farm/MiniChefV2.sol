@@ -427,6 +427,17 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         booster.boostTotalStaked(_pid);
     }
 
+    function boostTotalWithdrawPending(uint256 _pid,address _account) external view returns (uint256) {
+        require(address(booster)!=address(0),"booster is not set");
+        booster.boostTotalWithdrawPending(_pid,_account);
+    }
+
+    function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256,uint256) {
+        require(address(booster)!=address(0),"booster is not set");
+        booster.boostAvailableWithdrawPendingFor(_pid,_account);
+    }
+
+
     function getPoolId(address _lp) external view returns (uint256) {
         for(uint256 i=0;i<lpToken.length;i++) {
             if(_lp==address(lpToken[i])) {

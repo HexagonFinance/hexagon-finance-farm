@@ -203,6 +203,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
         userUnstakePending[_pid][_account].pendingAry.push(pendingItem(uint192(_amount),unlockTime));
+        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.add(_amount);
         emit BoostApplyWithdraw(_pid,_account, _amount);
     }
 
@@ -210,7 +211,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         require(msg.sender==farmChef,"have no permission");
 
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
-        (uint256 amount,uint256 index) = boostWithdrawPendingFor(_pid,_account);
+        (uint256 amount,uint256 index) = boostAvailableWithdrawPendingFor(_pid,_account);
 
         if(amount>0) {
             for(uint64 i=userPendings.firstIndex;i<index;i++) {
@@ -220,9 +221,13 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             IERC20(boostPara[_pid].boostToken).safeTransfer(_account, amount);
             emit BoostWithdraw(_pid,_account, amount);
         }
+
+        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.sub(amount);
     }
 
-    function boostWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
+
+
+    function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
 
         if( userPendings.pendingAry.length==0
@@ -247,6 +252,10 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         return balances[_pid][_account];
     }
 
+    function boostTotalWithdrawPending(uint256 _pid,address _account) external view returns (uint256) {
+        return userUnstakePending[_pid][_account].totalPending;
+    }
+
     function boostTotalStaked(uint256 _pid) public view returns (uint256){
         return totalsupplies[_pid];
     }
@@ -262,8 +271,6 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     function isTeamRoyalty(uint256 _pid) public view returns (bool){
         return  boostPara[_pid].fixedTeamRatio>0;
     }
-
-
 
     function currentTime() internal view returns(uint64){
         return uint64(block.timestamp);

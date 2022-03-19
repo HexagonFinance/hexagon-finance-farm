@@ -57,6 +57,21 @@ contract('hexgon farm test', function (accounts){
 
     let booster;
 
+    async function havestTest(staker) {
+        let preBal = await flake.balanceOf(staker);
+        console.log("prebalance=",preBal.toString(10));
+
+        res = await farminst.harvest(0,staker,{from:staker});
+        assert.equal(res.receipt.status,true);
+
+        let afterBal = await flake.balanceOf(staker);
+        console.log("afterbalance=",afterBal.toString(10));
+
+        let diff = web3.utils.fromWei(afterBal) - web3.utils.fromWei(preBal);
+
+        console.log("reward get:",diff);
+    }
+
     before("init contracts", async()=>{
 
         lp = await LpToken.new("lptoken","lp",18);
@@ -138,17 +153,19 @@ contract('hexgon farm test', function (accounts){
     })
 
     it("[0020] withdraw reward,should pass", async()=>{
-        let preBal = await flake.balanceOf(staker1);
-        console.log("prebalance=",preBal.toString(10));
-        res = await farminst.harvest(0,staker1,{from:staker1});
-        assert.equal(res.receipt.status,true);
-
-        let afterBal = await flake.balanceOf(staker1);
-        console.log("afterbalance=",afterBal.toString(10));
-
-        let diff = web3.utils.fromWei(afterBal) - web3.utils.fromWei(preBal);
-
-        console.log("reward get:",diff);
+        await havestTest(staker1);
+        // let preBal = await flake.balanceOf(staker1);
+        // console.log("prebalance=",preBal.toString(10));
+        //
+        // res = await farminst.harvest(0,staker1,{from:staker1});
+        // assert.equal(res.receipt.status,true);
+        //
+        // let afterBal = await flake.balanceOf(staker1);
+        // console.log("afterbalance=",afterBal.toString(10));
+        //
+        // let diff = web3.utils.fromWei(afterBal) - web3.utils.fromWei(preBal);
+        //
+        // console.log("reward get:",diff);
     })
 
     it("[0030] boost token ,should pass", async()=>{
@@ -160,9 +177,15 @@ contract('hexgon farm test', function (accounts){
 
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
         console.log(tokenBoostRatio[0].toString(10),tokenBoostRatio[0].toString(10))
+        assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
 
         let pending = await farminst.pendingFlake(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
+
+        let boostTokenAmount = await boostToken.balanceOf(booster.address);
+        assert.equal(VAL_1000.toString(10),boostTokenAmount.toString(10),"boost token should be same");
+
+        await havestTest(staker1);
     })
 
 })
