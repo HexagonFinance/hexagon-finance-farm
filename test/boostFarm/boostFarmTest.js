@@ -280,7 +280,34 @@ contract('hexgon farm test', function (accounts){
         let avlaiblePending = await farminst.boostAvailableWithdrawPendingFor(0,staker1);
         console.log("user available withdraw pending",web3.utils.fromWei(avlaiblePending[0]),avlaiblePending[1].toString(10));
         assert.equal(web3.utils.fromWei(avlaiblePending[0]),0,"should be 3000");
+    })
 
+    it("[0090] emergency withdraw boost token ,should pass", async()=>{
+        let res = await farminst.boostApplyWithdraw(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+        time.increase(24*3600);
+
+        res = await farminst.boostApplyWithdraw(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        res = await booster.setEmergencyWithdraw(0,true);
+        assert.equal(res.receipt.status,true);
+
+        let preBal = await boostToken.balanceOf(staker1);
+        res = await booster.emergencyWithdraw(0,staker1,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let afterBal = await boostToken.balanceOf(staker1);
+        let diff = web3.utils.fromWei(afterBal)-web3.utils.fromWei(preBal);
+        console.log("emergency withdraw boost token ",diff);
+
+        let wholePending = await farminst.boostTotalWithdrawPendingFor(0,staker1);
+        console.log(" user withdraw total pending",web3.utils.fromWei(wholePending));
+        assert.equal(web3.utils.fromWei(wholePending),0,"should be 4000");
+
+        let avlaiblePending = await farminst.boostAvailableWithdrawPendingFor(0,staker1);
+        console.log("user available withdraw pending",web3.utils.fromWei(avlaiblePending[0]),avlaiblePending[1].toString(10));
+        assert.equal(web3.utils.fromWei(avlaiblePending[0]),0,"should be 3000");
     })
 
 })
