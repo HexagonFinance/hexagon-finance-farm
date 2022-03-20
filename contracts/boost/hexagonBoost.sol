@@ -326,7 +326,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
         for(uint256 i=userPendings.firstIndex;i<userPendings.pendingAry.length;i++) {
             userPendings.pendingAry[i].pendingAmount = 0;
-         }
+        }
+
         userPendings.totalPending = 0;
         userPendings.firstIndex = uint64(userPendings.pendingAry.length);
         IERC20(boostPara[_pid].boostToken).safeTransfer(_to, amount);
