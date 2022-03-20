@@ -394,7 +394,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         uint256 incReward = _pendingFlake;
         uint256 teamRoyalty = 0;
         (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
-        //(_pendingFlake+teamRoyalty) is total (boosted reward + init reward)
+        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
         incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
 
         return (_pendingFlake,incReward,teamRoyalty);
