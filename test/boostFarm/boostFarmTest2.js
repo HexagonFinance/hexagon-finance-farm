@@ -154,6 +154,61 @@ contract('hexgon farm test', function (accounts){
         assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
     })
 
+    it("[0030] boost token ratio,should pass", async()=>{
+        res = await boostToken.approve(farminst.address,VAL_1B,{from:staker1});
+        assert.equal(res.receipt.status,true);
 
+        res = await farminst.boostDeposit(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        res = await farminst.boostDeposit(0,VAL_1000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        let ratio = new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"0.05","2000 boost ratio should be same");
+
+        res = await farminst.boostDeposit(0,VAL_2800,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        ratio = new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"0.078","2000 boost ratio should be same");
+
+    })
+
+    it("[0040] MAX ratio,should pass", async()=>{
+        res = await boostToken.approve(farminst.address,VAL_1B,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        res = await farminst.boostDeposit(0,VAL_448000,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+        let ratio = new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"4.5","448000 boost ratio should be same");
+    })
+
+
+    it("[0040] whitelist ratio,should pass", async()=>{
+       // [accounts[8],accounts[9]
+        let whiteListRatio = await booster.getWhiteListIncRatio(0,accounts[8],0);
+        let ratio = new BN(whiteListRatio[0].toString(10)).div(new BN(whiteListRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"0","448000 boost ratio should be same");
+
+        whiteListRatio = await booster.getWhiteListIncRatio(0,accounts[8],WITHTELIST_MINIMUM);
+        ratio = new BN(whiteListRatio[0].toString(10)).div(new BN(whiteListRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"0.1","448000 boost ratio should be same");
+
+        whiteListRatio = await booster.getWhiteListIncRatio(0,accounts[9],WITHTELIST_MINIMUM);
+        ratio = new BN(whiteListRatio[0].toString(10)).div(new BN(whiteListRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+        assert.equal(ratio,"0.1","448000 boost ratio should be same");
+    })
 
 })
