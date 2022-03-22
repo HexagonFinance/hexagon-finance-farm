@@ -61,5 +61,6 @@ contract hexagonBoostStorage is Halt {
 
     event BoostDeposit(uint256 indexed _pid,address indexed user,  uint256 amount);
     event BoostApplyWithdraw(uint256 indexed _pid,address indexed user, uint256 amount);
+    event CancelBoostApplyWithdraw(uint256 indexed _pid,address indexed user, uint256 amount);
     event BoostWithdraw(uint256 indexed _pid,address indexed user, uint256 amount);
 }

@@ -210,6 +210,25 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         emit BoostApplyWithdraw(_pid,_account, _amount);
     }
 
+    function cancelAllBoostApplyWithdraw(uint256 _pid,address _account) external {
+        require(msg.sender==farmChef,"have no permission");
+
+        uint256 pending = userUnstakePending[_pid][_account].totalPending;
+
+        totalsupplies[_pid] = totalsupplies[_pid].add(pending);
+        balances[_pid][_account] = balances[_pid][_account].add(pending);
+
+        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
+        for(uint64 i=userPendings.firstIndex;i< userPendings.pendingAry.length;i++) {
+            userPendings.pendingAry[i].pendingAmount = 0;
+        }
+
+        userPendings.firstIndex = uint64(userPendings.pendingAry.length);
+        userUnstakePending[_pid][_account].totalPending = 0;
+
+        emit CancelBoostApplyWithdraw(_pid,_account, pending);
+    }
+
     function boostWithdraw(uint256 _pid,address _account) external {
         require(msg.sender==farmChef,"have no permission");
 
