@@ -57,7 +57,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     }
 
     /// @notice Address of FLAKE contract.
-    IERC20 public immutable FLAKE;
+    IERC20 public FLAKE;
     // @notice The migrator contract. It has a lot of power. Can only be set through governance (owner).
     IMigratorChef public migrator;
 
@@ -100,6 +100,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         public
     {
         FLAKE = _flake;
+        safeMulsig = _multiSignature;
+    }
+
+    function setMulsigAndRewardToken(address _multiSignature,
+                                     address _flake)
+        public
+    {
+        FLAKE = IERC20(_flake);
         safeMulsig = _multiSignature;
     }
 

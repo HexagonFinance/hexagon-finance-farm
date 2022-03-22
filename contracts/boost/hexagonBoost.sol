@@ -35,6 +35,13 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         farmChef = _farmChef;
     }
 
+    function setMulsigAndFarmChef ( address _multiSignature,
+                                    address _farmChef)
+        public
+    {
+        safeMulsig = _multiSignature;
+        farmChef = _farmChef;
+    }
 
     function setFixedTeamRatio(uint256 _pid,uint256 _ratio)
         public onlyOrigin
