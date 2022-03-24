@@ -216,7 +216,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             uint256 log2_x = SmallNumbers.fixedLog2(_amount);
             uint256 log2_5 = SmallNumbers.fixedLog2(boostPara[_pid].log_para0.mul(SmallNumbers.FIXED_ONE));
             uint256 ratio = log2_x.mul(rayDecimals).div(log2_5);
-            return (ratio,rayDecimals);
+            //log_para2 already mul raydecimals
+            return (ratio.sub(boostPara[_pid].log_para2),rayDecimals);
         }
     }
 
