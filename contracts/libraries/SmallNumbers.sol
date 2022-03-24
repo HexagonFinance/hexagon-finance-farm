@@ -117,7 +117,7 @@ library SmallNumbers {
         This method asserts outside of bounds
 
     */
-    function fixedLog2(uint256 _x) public pure returns (uint256) {
+    function fixedLog2(uint256 _x) internal pure returns (uint256) {
         // Numbers below 1 are negative. 
         require( _x >= FIXED_ONE,"Log2 input is too small");
 
