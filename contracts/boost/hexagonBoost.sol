@@ -217,18 +217,13 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             uint256 log2_5 = SmallNumbers.fixedLog2(boostPara[_pid].log_para0.mul(SmallNumbers.FIXED_ONE));
             uint256 ratio = log2_x.mul(rayDecimals).div(log2_5);
             //log_para2 already mul raydecimals
-            return (ratio.sub(boostPara[_pid].log_para2),rayDecimals);
+            ratio = ratio.sub(boostPara[_pid].log_para2);
+            if(ratio>boostPara[_pid].maxIncRatio) {
+                ratio = boostPara[_pid].maxIncRatio;
+            }
+            return (ratio,rayDecimals);
         }
     }
-
-//    function fixedLog5(uint256 _x) public pure returns (uint256 log5) {
-//        //Cannot represent negative numbers (below 1)
-//        require(_x >= FIXED_ONE,"loge function input is too small");
-//
-//        uint256 _log2 = fixedLog2(_x);
-//        uint256 log2_5 = fixedLog2(5<<PRECISION);
-//        log5 = _log2/log2_5;
-//    }
 
     function boostDeposit(uint256 _pid,address _account,uint256 _amount) external {
         require(msg.sender==farmChef,"have no permission");
