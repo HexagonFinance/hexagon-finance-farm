@@ -8,6 +8,7 @@ import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SafeMath.sol";
 import "../libraries/proxyOwner.sol";
 import "./hexagonBoostStorage.sol";
+import "../libraries/SmallNumbers.sol";
 
 contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     using SafeMath for uint256;
@@ -73,30 +74,60 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function setBoostFarmFactorPara(uint256 _pid,
-                                    uint256 _baseBoostTokenAmount,
-                                    uint256 _baseIncreaseRatio,
-                                    uint256 _boostTokenStepAmount,
-                                    uint256 _ratioIncreaseStep,
-                                    uint256 _maxIncRatio,
                                     uint256 _lockTime,
                                     bool    _enableTokenBoost,
-                                    address _boostToken)
+                                    address _boostToken,
+                                    uint256 _minBoostAmount,
+                                    uint256 _maxIncRatio)
         external
         onlyOrigin
     {
-        boostPara[_pid].baseBoostTokenAmount = _baseBoostTokenAmount; //default 1000 ether
-        boostPara[_pid].baseIncreaseRatio = _baseIncreaseRatio; //default 3%
-        boostPara[_pid].ratioIncreaseStep = _ratioIncreaseStep;//default 1%
-        boostPara[_pid].boostTokenStepAmount = _boostTokenStepAmount; //default 1000 ether
-        boostPara[_pid].maxIncRatio = _maxIncRatio;
         boostPara[_pid].lockTime = _lockTime;
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
         boostPara[_pid].emergencyWithdraw = false;
 
+        if(_minBoostAmount==0) {
+            boostPara[_pid].minBoostAmount = _minBoostAmount;
+        } else {
+            boostPara[_pid].minBoostAmount = 500 ether;
+        }
+
+        if(_maxIncRatio==0) {
+            boostPara[_pid].maxIncRatio = 50*SmallNumbers.FIXED_ONE/10;
+        } else {
+            boostPara[_pid].maxIncRatio = _maxIncRatio;
+        }
+
         IERC20(boostPara[_pid].boostToken).approve(farmChef,uint256(-1));
     }
 
+    function setBoostFunctionPara(uint256 _pid,
+        uint256 _para0,
+        uint256 _para1,
+        uint256 _para2)
+        external
+        onlyOrigin
+    {
+        //log(5)(amount+LOG_PARA1)- LOG_PARA2
+        if(_para0==0) {
+            boostPara[_pid].log_para0 = 5;
+        } else {
+            boostPara[_pid].log_para0 = _para0;
+        }
+
+        if(_para1==0) {
+            boostPara[_pid].log_para1 = 500000e18;
+        } else {
+            boostPara[_pid].log_para1 = _para1;
+        }
+
+        if(_para2==0) {
+            boostPara[_pid].log_para2 = 329*rayDecimals/10;
+        } else {
+            boostPara[_pid].log_para2 = _para2;
+        }
+    }
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     function getTotalBoostedAmount(uint256 _pid,address _user,uint256 _lpamount,uint256 _baseamount)
         public view returns(uint256,uint256)
@@ -108,10 +139,11 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
        uint256  tokenBoostAmount = 0;
        if(isTokenBoost(_pid)) {
+           //increase amount + _baseamount
            tokenBoostAmount = getUserBoostIncAmount(_pid,_user,_baseamount);
        }
 
-       uint256 totalBoostAmount = _baseamount.add(whiteListBoostAmount).add(tokenBoostAmount);
+       uint256 totalBoostAmount = tokenBoostAmount.add(whiteListBoostAmount);
 
        if(isTeamRoyalty(_pid)) {
            uint256 teamAmount = getTeamAmount(_pid,totalBoostAmount);
@@ -175,24 +207,27 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         public view returns(uint256,uint256)
     {
 
-        if(_amount<boostPara[_pid].baseBoostTokenAmount
+        if(_amount<boostPara[_pid].minBoostAmount
             ||!boostPara[_pid].enableTokenBoost) {
-            return (0,rayDecimals);
+            return (0,SmallNumbers.FIXED_ONE);
         } else {
-            //amount(wei)*(increase step)/per wei
-            uint256 incRatio = _amount.sub(boostPara[_pid].baseBoostTokenAmount)
-                                    .mul(boostPara[_pid].ratioIncreaseStep)
-                                    .div(boostPara[_pid].boostTokenStepAmount);
-
-            incRatio = boostPara[_pid].baseIncreaseRatio.add(incRatio);
-
-            if(incRatio > boostPara[_pid].maxIncRatio) {
-                incRatio = boostPara[_pid].maxIncRatio;
-            }
-
-            return (incRatio,rayDecimals);
+            //log(LOG_PARA0)(amount+LOG_PARA1)- LOG_PARA2
+            _amount = SmallNumbers.FIXED_ONE.mul(_amount.add(boostPara[_pid].log_para1));
+            uint256 log2_x = SmallNumbers.fixedLog2(_amount);
+            uint256 log2_5 = SmallNumbers.fixedLog2(boostPara[_pid].log_para0.mul(SmallNumbers.FIXED_ONE));
+            uint256 ratio = log2_x.mul(rayDecimals).div(log2_5);
+            return (ratio,rayDecimals);
         }
     }
+
+//    function fixedLog5(uint256 _x) public pure returns (uint256 log5) {
+//        //Cannot represent negative numbers (below 1)
+//        require(_x >= FIXED_ONE,"loge function input is too small");
+//
+//        uint256 _log2 = fixedLog2(_x);
+//        uint256 log2_5 = fixedLog2(5<<PRECISION);
+//        log5 = _log2/log2_5;
+//    }
 
     function boostDeposit(uint256 _pid,address _account,uint256 _amount) external {
         require(msg.sender==farmChef,"have no permission");

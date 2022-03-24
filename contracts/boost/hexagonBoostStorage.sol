@@ -3,12 +3,14 @@
 pragma solidity 0.6.12;
 
 import "../libraries/Halt.sol";
+import "../libraries/SmallNumbers.sol";
 
 contract hexagonBoostStorage is Halt {
     address public safeMulsig;
     address public farmChef;
-    uint256 public RATIO_DENOM = 1000;
+    uint256 constant public RATIO_DENOM = 1000;
 
+    uint256 constant internal rayDecimals = 1e8;//100%
     //pid => totalSupply for boost token
     mapping(uint256=>uint256) internal totalsupplies;
     //pid => user => boost token balance
@@ -30,21 +32,28 @@ contract hexagonBoostStorage is Halt {
     //pid => user => whitelist user
     mapping(uint256=>mapping(address => bool)) public whiteListLpUserInfo;
 
-    uint256 constant internal rayDecimals = 1000e18;//100%
+//    log(LOG_PARA0)(amount+LOG_PARA1)- LOG_PARA2
+//    uint256 public LOG_PARA0 = 5;
+//    uint256 public LOG_PARA1 = 500000e18;
+//    uint256 public LOG_PARA2 = 329*SmallNumbers.FIXED_ONE/10;
+
 
     struct poolBoostPara{
         uint256 fixedTeamRatio;  //default 8%
         uint256 fixedWhitelistRatio;  //default 20%
         uint256 whiteListfloorLimit; //default 500 thousands
-        uint256 baseBoostTokenAmount;//1000 ether;
-        uint256 baseIncreaseRatio; //3%
-        uint256 ratioIncreaseStep;// 1%
-        uint256 boostTokenStepAmount;//1000 ether;
-        uint256 maxIncRatio;//5.5 multiple
         bool enableTokenBoost;
         uint256 lockTime;
         address boostToken;
         bool emergencyWithdraw;
+
+        uint256 minBoostAmount;
+        uint256 maxIncRatio;//5.5 multiple
+
+        uint256 log_para0;//5;
+        uint256 log_para1; //500000e18
+        uint256 log_para2;// 329*SmallNumbers.FIXED_ONE/10;
+
     }
 
     mapping(uint256=>poolBoostPara) public boostPara;
