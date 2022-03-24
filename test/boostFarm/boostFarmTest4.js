@@ -120,17 +120,25 @@ contract('hexgon farm test', function (accounts){
         res = await booster.setWhiteList(0,[accounts[8],accounts[9]]);
         assert.equal(res.receipt.status,true);
 
-        res = await booster.setBoostFarmFactorPara(0,
-                                                    baseBoostTokenAmount,//uint256 _baseBoostTokenAmount, 1000 ether
-                                                    baseIncreaseRatio,//uint256 _baseIncreaseRatio,3%
-                                                    boostTokenStepAmount,     //uint256 _boostTokenStepAmount,1000 ether
-                                                    ratioIncreaseStep,// uint256 _ratioIncreaseStep,1%
-                                                    maxIncRatio,//uint256 _maxIncRatio,4.5
-                                                    lockTime,//uint256 _lockTime,
-                                                    enableTokenBoost,    //bool    _enableTokenBoost,
-                                                    boostToken.address     //address _boostToken
-                                                );
 
+        res = await booster.setBoostFarmFactorPara( 0,
+            lockTime,//uint256 _lockTime,
+            enableTokenBoost,    //bool    _enableTokenBoost,
+            boostToken.address,     //address _boostToken
+            baseBoostTokenAmount,//uint256 _baseBoostTokenAmount, 1000 ether
+            maxIncRatio//uint256 _maxIncRatio,4.5
+        );
+
+        assert.equal(res.receipt.status,true);
+
+        let para0 = new BN(5);
+        let para1 = web3.utils.toWei('500000', 'ether');
+        let para2 = new BN(3290000000);
+        res = await booster.setBoostFunctionPara( 0,
+            para0,//uint256 _lockTime,
+            para1,
+            para2
+        );
         assert.equal(res.receipt.status,true);
 
     })
@@ -167,7 +175,7 @@ contract('hexgon farm test', function (accounts){
 
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
         console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
-        assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
+       // assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
 
         let pending = await farminst.pendingFlake(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
