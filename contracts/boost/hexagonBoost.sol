@@ -209,7 +209,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
         if(_amount<boostPara[_pid].minBoostAmount
             ||!boostPara[_pid].enableTokenBoost) {
-            return (0,SmallNumbers.FIXED_ONE);
+            return (rayDecimals,rayDecimals);
         } else {
             //log(LOG_PARA0)(amount+LOG_PARA1)- LOG_PARA2
             _amount = SmallNumbers.FIXED_ONE.mul(_amount.add(boostPara[_pid].log_para1));
