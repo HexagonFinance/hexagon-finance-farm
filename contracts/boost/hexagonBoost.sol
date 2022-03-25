@@ -39,6 +39,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     function setMulsigAndFarmChef ( address _multiSignature,
                                     address _farmChef)
         public
+        onlyOrigin
     {
         safeMulsig = _multiSignature;
         farmChef = _farmChef;
@@ -94,7 +95,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         }
 
         if(_maxIncRatio==0) {
-            boostPara[_pid].maxIncRatio = 50*SmallNumbers.FIXED_ONE/10;
+            boostPara[_pid].maxIncRatio = 50*SmallNumbers.FIXED_ONE;
         } else {
             boostPara[_pid].maxIncRatio = _maxIncRatio;
         }
@@ -139,7 +140,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
        uint256  tokenBoostAmount = 0;
        if(isTokenBoost(_pid)) {
-           //increase amount + _baseamount
+           //increased amount + _baseamount
            tokenBoostAmount = getUserBoostIncAmount(_pid,_user,_baseamount);
        }
 
@@ -239,6 +240,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         require(msg.sender==farmChef,"have no permission");
 
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
+        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].add(_amount);
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
         userUnstakePending[_pid][_account].pendingAry.push(pendingItem(uint192(_amount),unlockTime));
@@ -254,6 +256,8 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         uint256 pending = userUnstakePending[_pid][_account].totalPending;
 
         totalsupplies[_pid] = totalsupplies[_pid].add(pending);
+        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(pending);
+
         balances[_pid][_account] = balances[_pid][_account].add(pending);
 
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
@@ -273,6 +277,9 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
         (uint256 amount,uint256 index) = boostAvailableWithdrawPendingFor(_pid,_account);
 
+        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.sub(amount);
+        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(amount);
+
         if(amount>0) {
             for(uint64 i=userPendings.firstIndex;i<index;i++) {
                 userPendings.pendingAry[i].pendingAmount = 0;
@@ -282,7 +289,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             emit BoostWithdraw(_pid,_account, amount);
         }
 
-        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.sub(amount);
+
     }
 
 
@@ -313,6 +320,10 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
     function boostTotalStaked(uint256 _pid) public view returns (uint256){
         return totalsupplies[_pid];
+    }
+
+    function boostTotalWithdrawPending(uint256 _pid) public view returns (uint256){
+        return totalWithdrawPending[_pid];
     }
 
     function isTokenBoost(uint256 _pid) public view returns (bool){

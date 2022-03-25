@@ -456,5 +456,6 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
                 return i;
             }
         }
+        return uint256(-1);
     }
 }
