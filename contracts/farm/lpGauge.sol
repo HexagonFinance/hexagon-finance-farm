@@ -99,12 +99,8 @@ contract lpGauge is BoringOwnable{
     * @param usr The address that will have its coins burned
     * @param amount The amount of coins to burn
     */
-    function burn(address usr, uint256 amount) external {
+    function burn(address usr, uint256 amount) onlyOwner external {
         require(balanceOf[usr] >= amount, "Coin/insufficient-balance");
-        if (owner != msg.sender && usr != msg.sender && allowance[usr][msg.sender] != uint256(-1)) {
-            require(allowance[usr][msg.sender] >= amount, "Coin/insufficient-allowance");
-            allowance[usr][msg.sender] = subtract(allowance[usr][msg.sender], amount);
-        }
         balanceOf[usr] = subtract(balanceOf[usr], amount);
         totalSupply    = subtract(totalSupply, amount);
         if (owner != msg.sender){

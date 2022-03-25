@@ -261,13 +261,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function depoistPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal {
         UserInfo storage user = userInfo[pid][to];
+        uint256 oldAmount = user.amount;
         user.amount = user.amount.add(amount);
         user.rewardDebt = user.rewardDebt.add(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, to, to, 0, user.amount,false);
+            _rewarder.onFlakeReward(pid, to, to, oldAmount, user.amount,false);
         }
     }
     /// @notice Withdraw LP tokens from MCV2.
@@ -286,13 +287,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function withdrawPending(PoolInfo memory pool,uint256 pid, uint256 amount, address _usr) internal {
         UserInfo storage user = userInfo[pid][_usr];
         // Effects
+        uint256 oldAmount = user.amount;
         user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
         user.amount = user.amount.sub(amount);
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, _usr, _usr, 0, user.amount,false);
+            _rewarder.onFlakeReward(pid, _usr, _usr, oldAmount, user.amount,false);
         }
     }
     /// @notice Harvest proceeds for transaction sender to `to`.
@@ -325,7 +327,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward( pid, msg.sender, to, _pendingFlake, user.amount,true);
+            _rewarder.onFlakeReward( pid, msg.sender, to, user.amount, user.amount,true);
         }
 
         emit Harvest(msg.sender, pid, _pendingFlake,incReward);
@@ -338,6 +340,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function withdrawAndHarvest(uint256 pid, uint256 amount, address to) external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
+        uint256 oldAmount = user.amount;
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
         uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         ////////////////////////////////////////////////////////////////////////
@@ -353,19 +356,17 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         // Effects
         user.rewardDebt = accumulatedFlake.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
         user.amount = user.amount.sub(amount);
-        lpGauges[pid].burn(msg.sender,amount);
-
         // Interactions
         FLAKE.safeTransfer(to, _pendingFlake);
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, msg.sender, to, _pendingFlake, user.amount,true);
+            _rewarder.onFlakeReward(pid, msg.sender, to, oldAmount, user.amount,true);
         }
 
 
         lpToken[pid].safeTransfer(to, amount);
-
+        lpGauges[pid].burn(msg.sender,amount);
         emit Withdraw(msg.sender, pid, amount, to);
         emit Harvest(msg.sender, pid, _pendingFlake,incReward);
     }
@@ -378,13 +379,11 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         uint256 amount = user.amount;
         user.amount = 0;
         user.rewardDebt = 0;
-        lpGauges[pid].burn(msg.sender,amount);
-
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
             _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false);
         }
-
+        lpGauges[pid].burn(msg.sender,amount);
         // Note: transfer can fail or succeed if `amount` is zero.
         lpToken[pid].safeTransfer(to, amount);
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
