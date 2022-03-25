@@ -7,6 +7,8 @@ import "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol";
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "./IMiniChefPool.sol";
+import "../interfaces/IBoost.sol";
+
 /// @author @0xKeno
 contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
     using BoringMath for uint256;
@@ -14,6 +16,8 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
     using BoringERC20 for IERC20;
 
     IERC20 private immutable rewardToken;
+
+    IBoost public booster;
 
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
@@ -80,6 +84,10 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
                 (user.amount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
                     user.rewardDebt
                 ).add(user.unpaidRewards);
+
+            //for boost pending1
+            (pending,,) = boostRewardAndGetTeamRoyalty(pid,_user,pending,user.amount);
+
             uint256 balance = rewardToken.balanceOf(address(this));
             if (!bHarvest){
                 user.unpaidRewards = pending;
@@ -182,6 +190,8 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply);
         }
         pending = (user.amount.mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
+        //for boost pending1
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,pending,user.amount);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -211,5 +221,22 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
             emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
         }
     }
+    ///////////////////////////////////////////////////////////////////////////////
+    function setBooster(address _booster) public onlyOwner {
+        booster = IBoost(_booster);
+    }
 
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+        if(address(booster)==address(0)) {
+            return (_pendingFlake,0,0);
+        }
+        //record init reward
+        uint256 incReward = _pendingFlake;
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
+        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+
+        return (_pendingFlake,incReward,teamRoyalty);
+    }
 }

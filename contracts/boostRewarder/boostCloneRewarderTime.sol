@@ -7,6 +7,7 @@ import "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol";
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "./IMiniChefPool.sol";
+import "../interfaces/IBoost.sol";
 
 /// @author @0xKeno
 contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
@@ -15,7 +16,7 @@ contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
     using BoringERC20 for IERC20;
 
     IERC20 public rewardToken;
-
+    IBoost public booster;
     /// @notice Info of each Rewarder user.
     /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of Reward Token entitled to the user.
@@ -71,6 +72,7 @@ contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
         emit LogInit(rewardToken, owner, rewardPerSecond, masterLpToken);
     }
 
+
     function onFlakeReward (uint256 pid, address _user, address to, uint256, uint256 lpTokenAmount,bool bHarvest) onlyMCV2 lock override external {
         require(IMiniChefPool(MASTERCHEF_V2).lpToken(pid) == masterLpToken);
 
@@ -82,6 +84,9 @@ contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
                 (user.amount.mul(pool.accToken1PerShare) / ACC_TOKEN_PRECISION).sub(
                     user.rewardDebt
                 ).add(user.unpaidRewards);
+            //for boost
+            (pending,,) = boostRewardAndGetTeamRoyalty(pid,_user,pending,user.amount);
+
             if (!bHarvest){
                 user.unpaidRewards = pending;
             }else{
@@ -158,6 +163,8 @@ contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
             accToken1PerShare = accToken1PerShare.add(flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply);
         }
         pending = (user.amount.mul(accToken1PerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
+
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,pending,user.amount);
     }
 
     /// @notice Update reward variables of the given pool.
@@ -178,4 +185,24 @@ contract boostCloneRewarderTime is IRewarder,  BoringOwnable{
             emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accToken1PerShare);
         }
     }
+///////////////////////////////////////////////////////////////////////////////
+    function setBooster(address _booster) public onlyOwner {
+        booster = IBoost(_booster);
+    }
+
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+        if(address(booster)==address(0)) {
+            return (_pendingFlake,0,0);
+        }
+
+        //record init reward
+        uint256 incReward = _pendingFlake;
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
+        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+
+        return (_pendingFlake,incReward,teamRoyalty);
+    }
+
 }
