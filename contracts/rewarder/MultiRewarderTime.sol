@@ -63,7 +63,8 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     }
 
 
-    function onFlakeReward (uint256 pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+    function onFlakeReward (uint256 _pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+        _pid = _pid;
         uint nLen = poolInfos.length;
         for (uint i=0;i<nLen;i++){
             onPoolReward(i,_user,to,oldAmount,lpToken,bHarvest);
@@ -94,7 +95,8 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;
         emit LogOnReward(_user, index, pending - user.unpaidRewards, to);
     }
-    function pendingTokens(uint256 pid, address user, uint256) override external view returns (IERC20[] memory rewardTokens, uint256[] memory rewardAmounts) {
+    function pendingTokens(uint256 _pid, address user, uint256) override external view returns (IERC20[] memory rewardTokens, uint256[] memory rewardAmounts) {
+        _pid = _pid;
         uint nLen = poolInfos.length;
         IERC20[] memory _rewardTokens = new IERC20[](nLen);
         uint256[] memory _rewardAmounts = new uint256[](nLen);
@@ -193,10 +195,10 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     }
 
     /// @notice Update reward variables of the given pool.
-    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param _pid The index of the pool. See `poolInfo`.
     /// @return pool Returns the pool that was updated.
-    function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
-        pool = poolInfos[pid];
+    function updatePool(uint256 _pid) public returns (PoolInfo memory pool) {
+        pool = poolInfos[_pid];
         if (block.timestamp > pool.lastRewardTime) {
             uint256 lpSupply = totalSupply();
 
@@ -206,8 +208,8 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
                 pool.accFlakePerShare = pool.accFlakePerShare.add((flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply).to128());
             }
             pool.lastRewardTime = block.timestamp.to64();
-            poolInfos[pid] = pool;
-            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
+            poolInfos[_pid] = pool;
+            emit LogUpdatePool(_pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
         }
     }
     function totalSupply()internal view returns (uint256){

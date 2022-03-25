@@ -7,6 +7,7 @@ import "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol";
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "./IMiniChefPool.sol";
+import "../interfaces/IBoost.sol";
 /// @author @0xKeno
 contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     using BoringMath for uint256;
@@ -14,7 +15,7 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     using BoringERC20 for IERC20;
 
     uint256 public pid;
-
+    IBoost public booster;
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of Flake entitled to the user.
@@ -64,7 +65,8 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     }
 
 
-    function onFlakeReward (uint256 pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+    function onFlakeReward (uint256 _pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+        _pid = _pid;
         uint nLen = poolInfos.length;
         for (uint i=0;i<nLen;i++){
             onPoolReward(i,_user,to,oldAmount,lpToken,bHarvest);
@@ -79,6 +81,9 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
                 (oldAmount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
                     user.rewardDebt
                 ).add(user.unpaidRewards);
+                //for boost pending1
+            (pending,,) = boostRewardAndGetTeamRoyalty(index,_user,oldAmount,pending);
+
             uint256 balance = pool.rewardToken.balanceOf(address(this));
             if (!bHarvest){
                 user.unpaidRewards = pending;
@@ -95,7 +100,8 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;
         emit LogOnReward(_user, index, pending - user.unpaidRewards, to);
     }
-    function pendingTokens(uint256 pid, address user, uint256) override external view returns (IERC20[] memory rewardTokens, uint256[] memory rewardAmounts) {
+    function pendingTokens(uint256 _pid, address user, uint256) override external view returns (IERC20[] memory rewardTokens, uint256[] memory rewardAmounts) {
+        _pid = _pid;
         uint nLen = poolInfos.length;
         IERC20[] memory _rewardTokens = new IERC20[](nLen);
         uint256[] memory _rewardAmounts = new uint256[](nLen);
@@ -182,6 +188,8 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         }
         IERC20 lpGaugeToken = IMiniChefPool(MASTERCHEF_V2).lpGauges(pid);
         pending = (lpGaugeToken.balanceOf(_user).mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
+        //for boost pending1
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,lpGaugeToken.balanceOf(_user),pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -194,10 +202,10 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     }
 
     /// @notice Update reward variables of the given pool.
-    /// @param pid The index of the pool. See `poolInfo`.
+    /// @param _pid The index of the pool. See `poolInfo`.
     /// @return pool Returns the pool that was updated.
-    function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
-        pool = poolInfos[pid];
+    function updatePool(uint256 _pid) public returns (PoolInfo memory pool) {
+        pool = poolInfos[_pid];
         if (block.timestamp > pool.lastRewardTime) {
             uint256 lpSupply = totalSupply();
 
@@ -207,11 +215,30 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
                 pool.accFlakePerShare = pool.accFlakePerShare.add((flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply).to128());
             }
             pool.lastRewardTime = block.timestamp.to64();
-            poolInfos[pid] = pool;
-            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
+            poolInfos[_pid] = pool;
+            emit LogUpdatePool(_pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
         }
     }
+
     function totalSupply()internal view returns (uint256){
         IMiniChefPool(MASTERCHEF_V2).lpGauges(pid).totalSupply();
+    }
+///////////////////////////////////////////////////////////////////////////////
+    function setBooster(address _booster) public onlyOwner {
+        booster = IBoost(_booster);
+    }
+
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
+        if(address(booster)==address(0)) {
+            return (_pendingFlake,0,0);
+        }
+        //record init reward
+        uint256 incReward = _pendingFlake;
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
+        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+
+        return (_pendingFlake,incReward,teamRoyalty);
     }
 }
