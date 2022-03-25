@@ -25,7 +25,8 @@ describe("MiniChefV2", function () {
     await logUserInfo(minichef,owner,addr1);
     await gauge.connect(addr1).transfer(owner.address,"1000000000");
     await logUserInfo(minichef,owner,addr1);
-    await gauge.transfer(addr1.address,"1000000000");
+    let tx = await gauge.transfer(addr1.address,"1000000000");
+    console.log(tx);
     await logUserInfo(minichef,owner,addr1);
   });
   async function logUserInfo(minichef,owner,addr1){
