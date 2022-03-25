@@ -6,6 +6,7 @@ describe("MiniChefV2", function () {
   it("create new MiniChefV2 contract", async function () {
     const MiniChefV2 = await ethers.getContractFactory("MiniChefV2");
     const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
+    const MultiRewarderTime = await ethers.getContractFactory("MultiRewarderTime");
     const [owner, addr1] = await ethers.getSigners();
     const flake = await ERC20Mock.deploy("flake","flake","0x100000000000000000000000000000000");
     await flake.deployed();
@@ -14,9 +15,13 @@ describe("MiniChefV2", function () {
     const minichef = await MiniChefV2.deploy(owner.getAddress(),flake.address);
     await minichef.deployed();
     await minichef.setFlakePerSecond("1000000000");
-    await minichef.add("10000", lpToken.address, nullAddress);
+    const rewarder = await MultiRewarderTime.deploy(minichef.address,0);
+    await rewarder.deployed();
+    await minichef.add("10000", lpToken.address, rewarder.address);
+    await rewarder.add(flake.address,"10000000");
     await lpToken.approve(minichef.address,"1000000000");
     await minichef.deposit("0","1000000000",addr1.address);
+    await rewarder.add(flake.address,"10000000");
     let lpGauge = await minichef.lpGauges(0);
     let gauge = await ethers.getContractAt("lpGauge",lpGauge);
     let balance0 = await gauge.balanceOf(owner.address);
@@ -32,9 +37,9 @@ describe("MiniChefV2", function () {
   async function logUserInfo(minichef,owner,addr1){
     let userInfo = await minichef.userInfo(0,owner.address);
     let balance = await minichef.pendingFlake(0,owner.address);
-    console.log("owner userInfo",balance.toNumber(),userInfo);
+    console.log("owner userInfo",balance,userInfo);
     userInfo = await minichef.userInfo(0,addr1.address);
     balance = await minichef.pendingFlake(0,addr1.address);
-    console.log("addr1 userInfo",balance.toNumber(),userInfo);
+    console.log("addr1 userInfo",balance,userInfo);
   }
 });

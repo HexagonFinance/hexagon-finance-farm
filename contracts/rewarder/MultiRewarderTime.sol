@@ -13,8 +13,7 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
 
-    IERC20 private immutable lpGaugeToken;
-
+    uint256 public pid;
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of Flake entitled to the user.
@@ -57,9 +56,9 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     event LogRewardPerSecond(uint256 rewardPerSecond);
     event LogInit();
 
-    constructor (address _MASTERCHEF_V2,uint256 pid) public {
+    constructor (address _MASTERCHEF_V2,uint256 _pid) public {
         MASTERCHEF_V2 = _MASTERCHEF_V2;
-        lpGaugeToken = IMiniChefPool(_MASTERCHEF_V2).lpGauges(pid);
+        pid = _pid;
         unlocked = 1;
     }
 
@@ -180,6 +179,7 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
             uint256 flakeReward = time.mul(pool.rewardPerSecond);
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply);
         }
+        IERC20 lpGaugeToken = IMiniChefPool(MASTERCHEF_V2).lpGauges(pid);
         pending = (lpGaugeToken.balanceOf(_user).mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
     }
 
@@ -211,6 +211,6 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
         }
     }
     function totalSupply()internal view returns (uint256){
-        lpGaugeToken.totalSupply();
+        IMiniChefPool(MASTERCHEF_V2).lpGauges(pid).totalSupply();
     }
 }
