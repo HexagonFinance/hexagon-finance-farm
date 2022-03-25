@@ -13,13 +13,11 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
 
-    IERC20 private immutable lpGaugeToken;
-
+    uint256 public pid;
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of Flake entitled to the user.
     struct UserInfo {
-        uint256 amount;
         uint256 rewardDebt;
         uint256 unpaidRewards;
     }
@@ -58,33 +56,26 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
     event LogRewardPerSecond(uint256 rewardPerSecond);
     event LogInit();
 
-    constructor (IERC20 _rewardToken, uint256 _rewardPerSecond, address _MASTERCHEF_V2,uint256 pid) public {
-        uint256 lastRewardTime = block.timestamp;
-        poolInfos.push(PoolInfo({
-            rewardPerSecond: _rewardPerSecond,
-            lastRewardTime: lastRewardTime.to64(),
-            accFlakePerShare: 0,
-            rewardToken:IERC20(_rewardToken)
-        }));
+    constructor (address _MASTERCHEF_V2,uint256 _pid) public {
         MASTERCHEF_V2 = _MASTERCHEF_V2;
-        lpGaugeToken = IMiniChefPool(_MASTERCHEF_V2).lpGauges(pid);
+        pid = _pid;
         unlocked = 1;
     }
 
 
-    function onFlakeReward (uint256 pid, address _user, address to, uint256, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+    function onFlakeReward (uint256 pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
         uint nLen = poolInfos.length;
         for (uint i=0;i<nLen;i++){
-            onPoolReward(i,_user,to,lpToken,bHarvest);
+            onPoolReward(i,_user,to,oldAmount,lpToken,bHarvest);
         }
     }
-    function onPoolReward (uint256 index, address _user, address to, uint256 lpToken,bool bHarvest) internal {
+    function onPoolReward (uint256 index, address _user, address to,uint256 oldAmount, uint256 lpToken,bool bHarvest) internal {
         PoolInfo memory pool = updatePool(index);
         UserInfo storage user = userInfo[index][_user];
         uint256 pending;
-        if (user.amount > 0) {
+        if (oldAmount > 0) {
             pending =
-                (user.amount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
+                (oldAmount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
                     user.rewardDebt
                 ).add(user.unpaidRewards);
             uint256 balance = pool.rewardToken.balanceOf(address(this));
@@ -100,7 +91,6 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
                 }
             }
         }
-        user.amount = lpToken;
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;
         emit LogOnReward(_user, index, pending - user.unpaidRewards, to);
     }
@@ -189,7 +179,8 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
             uint256 flakeReward = time.mul(pool.rewardPerSecond);
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_TOKEN_PRECISION) / lpSupply);
         }
-        pending = (user.amount.mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
+        IERC20 lpGaugeToken = IMiniChefPool(MASTERCHEF_V2).lpGauges(pid);
+        pending = (lpGaugeToken.balanceOf(_user).mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -220,6 +211,6 @@ contract MultiRewarderTime is IRewarder,  BoringOwnable{
         }
     }
     function totalSupply()internal view returns (uint256){
-        lpGaugeToken.totalSupply();
+        IMiniChefPool(MASTERCHEF_V2).lpGauges(pid).totalSupply();
     }
 }
