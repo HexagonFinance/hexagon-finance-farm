@@ -93,14 +93,14 @@ contract boostCloneRewarderTimeDual is IRewarder,  BoringOwnable{
                     _userInfo.rewardDebt1
                 ).add(_userInfo.unpaidRewards1);
             //for boost pending1
-            (pending1,,) = boostRewardAndGetTeamRoyalty(pid,_user,pending1,_userInfo.amount);
+            (pending1,,) = boostRewardAndGetTeamRoyalty(pid,_user,_userInfo.amount,pending1);
 
             pending2 =
                 (_userInfo.amount.mul(pool.accToken2PerShare) / ACC_TOKEN_PRECISION).sub(
                     _userInfo.rewardDebt2
                 ).add(_userInfo.unpaidRewards2);
             //for boost pending1
-            (pending2,,) = boostRewardAndGetTeamRoyalty(pid,_user,pending2,_userInfo.amount);
+            (pending2,,) = boostRewardAndGetTeamRoyalty(pid,_user,_userInfo.amount,pending2);
 
             uint256 balance1 = rewardToken1.balanceOf(address(this));
             uint256 balance2 = rewardToken2.balanceOf(address(this));
@@ -202,11 +202,11 @@ contract boostCloneRewarderTimeDual is IRewarder,  BoringOwnable{
         }
         reward1 = (user.amount.mul(accToken1PerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt1).add(user.unpaidRewards1);
         //for boost pending1
-        (reward1,,) = boostRewardAndGetTeamRoyalty(_pid,_user,reward1,user.amount);
+        (reward1,,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,reward1);
 
         reward2 = (user.amount.mul(accToken2PerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt2).add(user.unpaidRewards2);
         //for boost pending2
-        (reward2,,) = boostRewardAndGetTeamRoyalty(_pid,_user,reward2,user.amount);
+        (reward2,,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,reward2);
     }
 
     /// @notice Update reward variables of the given pool.
@@ -234,7 +234,7 @@ contract boostCloneRewarderTimeDual is IRewarder,  BoringOwnable{
         booster = IBoost(_booster);
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
         if(address(booster)==address(0)) {
             return (_pendingFlake,0,0);
         }

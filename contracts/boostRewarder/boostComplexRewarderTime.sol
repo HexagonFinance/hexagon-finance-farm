@@ -86,7 +86,7 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
                 ).add(user.unpaidRewards);
 
             //for boost pending1
-            (pending,,) = boostRewardAndGetTeamRoyalty(pid,_user,pending,user.amount);
+            (pending,,) = boostRewardAndGetTeamRoyalty(pid,_user,user.amount,pending);
 
             uint256 balance = rewardToken.balanceOf(address(this));
             if (!bHarvest){
@@ -191,7 +191,7 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
         }
         pending = (user.amount.mul(accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).add(user.unpaidRewards);
         //for boost pending1
-        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,pending,user.amount);
+        (pending,,) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
     }
 
     /// @notice Update reward variables for all pools. Be careful of gas spending!
@@ -226,7 +226,7 @@ contract boostComplexRewarderTime is IRewarder,  BoringOwnable{
         booster = IBoost(_booster);
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _pendingFlake,uint256 _userLpAmount) view public returns(uint256,uint256,uint256) {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
         if(address(booster)==address(0)) {
             return (_pendingFlake,0,0);
         }
