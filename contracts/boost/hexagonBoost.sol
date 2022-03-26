@@ -195,6 +195,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         public view returns(uint256)
     {
         (uint256 ratio,uint256 denom) =  boostRatio(_pid,balances[_pid][_account]);
+        //ratio is 1.0.....
         return _baseamount.mul(ratio).div(denom);
     }
 
@@ -241,6 +242,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
         totalWithdrawPending[_pid] = totalWithdrawPending[_pid].add(_amount);
+
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
         uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
         userUnstakePending[_pid][_account].pendingAry.push(pendingItem(uint192(_amount),unlockTime));
@@ -386,18 +388,32 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function emergencyWithdraw(uint256 _pid, address _to) public {
-        require(boostPara[_pid].emergencyWithdraw,"do not allow");
+        require(boostPara[_pid].emergencyWithdraw,"do not allow now");
 
         pendingGroup storage userPendings = userUnstakePending[_pid][msg.sender];
         uint256 amount = boostStakedFor(_pid,msg.sender);
-        amount = amount.add(userPendings.totalPending);
+        if(totalsupplies[_pid].sub(amount)>=0) {
+            totalsupplies[_pid] = totalsupplies[_pid].sub(amount);
+        } else {
+            //should not happen
+            totalsupplies[_pid] = 0;
+        }
+
+        if(totalWithdrawPending[_pid].sub(userPendings.totalPending)>=0) {
+            totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(userPendings.totalPending);
+        } else {
+            //should not happen
+            totalWithdrawPending[_pid] = 0;
+        }
 
         for(uint256 i=userPendings.firstIndex;i<userPendings.pendingAry.length;i++) {
             userPendings.pendingAry[i].pendingAmount = 0;
         }
 
+        amount = amount.add(userPendings.totalPending);
         userPendings.totalPending = 0;
         userPendings.firstIndex = uint64(userPendings.pendingAry.length);
+
         IERC20(boostPara[_pid].boostToken).safeTransfer(_to, amount);
     }
 }
