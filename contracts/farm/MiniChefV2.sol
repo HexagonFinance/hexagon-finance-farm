@@ -300,7 +300,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of FLAKE rewards.
-    function harvest(uint256 pid, address to) external {
+    function harvest(uint256 pid, address to) public {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
@@ -409,6 +409,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {
         require(address(booster)!=address(0),"booster is not set");
+
+        //need to harvest when boost amount changed
+        harvest(_pid, msg.sender);
+
         booster.boostDeposit(_pid,msg.sender,_amount);
 
         address boostToken = booster.getBoostToken(_pid);
@@ -417,6 +421,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
         require(address(booster)!=address(0),"booster is not set");
+
+        //need to harvest when boost amount changed
+        harvest(_pid, msg.sender);
+
         booster.boostApplyWithdraw(_pid,msg.sender,_amount);
     }
 
@@ -445,9 +453,13 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         return booster.boostAvailableWithdrawPendingFor(_pid,_account);
     }
 
-    function cancelAllBoostApplyWithdraw(uint256 _pid,address _account) external {
+    function cancelAllBoostApplyWithdraw(uint256 _pid) external {
         require(address(booster)!=address(0),"booster is not set");
-        return booster.cancelAllBoostApplyWithdraw(_pid,_account);
+
+        //need to harvest when boost amount changed
+        harvest(_pid, msg.sender);
+
+        return booster.cancelAllBoostApplyWithdraw(_pid,msg.sender);
     }
 
     function getPoolId(address _lp) external view returns (uint256) {
