@@ -105,6 +105,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     function setMulsigAndRewardToken(address _multiSignature,
                                      address _flake)
+        onlyOrigin
         public
     {
         FLAKE = IERC20(_flake);
