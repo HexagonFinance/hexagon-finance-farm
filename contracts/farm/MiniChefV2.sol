@@ -394,6 +394,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         booster = IBoost(_booster);
     }
 
+    function setRoyaltyReciever(address _royaltyReciever) public onlyOrigin {
+        royaltyReciever = _royaltyReciever;
+    }
+
     function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
         if(address(booster)==address(0)) {
             return (_pendingFlake,0,0);
