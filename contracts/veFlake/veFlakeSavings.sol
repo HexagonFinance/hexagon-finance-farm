@@ -53,7 +53,7 @@ contract veFlakeSavings is veFlakeSavingsData/*,proxyOwner*/{
         minRate = _minRate;
     }
 
-    function setInterestInfo(int256 _interestRate,uint256 _interestInterval)
+    function setInterestInfo(uint256 _interestRate,uint256 _interestInterval)
         external
         onlyOrigin
     {
@@ -62,7 +62,7 @@ contract veFlakeSavings is veFlakeSavingsData/*,proxyOwner*/{
             accumulatedRate = rayDecimals;
         }
 
-        require(_interestRate<=1e27 && _interestRate>=-1e27,"input stability fee is too large");
+        require(_interestRate<=1e27,"input stability fee is too large");
         require(_interestInterval>0,"input mine Interval must larger than zero");
 
         uint256 newLimit = rpower(uint256(1e27+_interestRate),/*one year*/31536000/_interestInterval,rayDecimals);

@@ -34,7 +34,7 @@ contract veFlakeSavingsData is Halt,ReentrancyGuard {
     uint256 public assetFloor;         // [rad]
 
     //interest rate
-    int256  public interestRate;
+    uint256  public interestRate;
     uint256 public interestInterval;
 
     struct assetInfo{
@@ -56,11 +56,11 @@ contract veFlakeSavingsData is Halt,ReentrancyGuard {
         _;
     }
 
-    event SetInterestInfo(address indexed from,int256 _interestRate,uint256 _interestInterval);
+    event SetInterestInfo(address indexed from,uint256 _interestRate,uint256 _interestInterval);
     event AddAsset(address indexed recieptor,uint256 amount);
     event SubAsset(address indexed account,uint256 amount,uint256 subOrigin);
 
-    event InitContract(address indexed sender,address stakeToken,int256 interestRate,uint256 interestInterval,
+    event InitContract(address indexed sender,address stakeToken,uint256 interestRate,uint256 interestInterval,
         uint256 assetCeiling,uint256 assetFloor);
     event Save(address indexed sender, address indexed account, uint256 amount);
     event Withdraw(address indexed sender, address indexed account, uint256 amount);
