@@ -38,8 +38,10 @@ contract veFlakeSavings is veFlakeSavingsData/*,proxyOwner*/{
        public
     {
         flake = _flake;
-        veflake = new veFlakeToken("Hexagon Flake Token","FLAKE",18,address(this));
+        veflake = new veFlakeToken(address(this));
+        veflake.init("Hexagon Flake Token","FLAKE",18);
         safeMulsig = _multiSignature;
+
     }
 
 //    function () external payable{

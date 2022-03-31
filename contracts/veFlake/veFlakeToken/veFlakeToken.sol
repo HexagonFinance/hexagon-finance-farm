@@ -24,17 +24,20 @@ contract veFlakeToken {
         _;
     }
 
-    constructor(string memory tokenName,
+    constructor ( address _savingPool) public {
+        savingPool = _savingPool;
+    }
+
+    function init(string memory tokenName,
                 string memory tokenSymbol,
-                uint256 tokenDecimal,
-                address _savingPool
-              )
+                uint256 tokenDecimal)
+        onlySavingPool
         public
     {
         name_ = tokenName;
         symbol_ = tokenSymbol;
         decimals_ = uint8(tokenDecimal);
-        savingPool = _savingPool;
+
     }
 
 
