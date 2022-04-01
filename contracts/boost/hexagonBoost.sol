@@ -288,10 +288,9 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
             }
             userPendings.firstIndex = uint64(index+1);
             IERC20(boostPara[_pid].boostToken).safeTransfer(_account, amount);
-            emit BoostWithdraw(_pid,_account, amount);
         }
 
-
+        emit BoostWithdraw(_pid,_account, amount);
     }
 
 
