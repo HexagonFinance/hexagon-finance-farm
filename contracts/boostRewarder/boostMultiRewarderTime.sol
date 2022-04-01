@@ -68,6 +68,7 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
 
 
     function onFlakeReward (uint256 _pid, address _user, address to, uint256 oldAmount, uint256 lpToken,bool bHarvest) onlyMCV2 lock override external {
+
         _pid = _pid;
         uint nLen = poolInfos.length;
         for (uint i=0;i<nLen;i++){

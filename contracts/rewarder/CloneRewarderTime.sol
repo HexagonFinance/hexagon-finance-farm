@@ -68,11 +68,12 @@ contract CloneRewarderTime is IRewarder,  BoringOwnable{
         (rewardToken, owner, rewardPerSecond, masterLpToken) = abi.decode(data, (IERC20, address, uint256, IERC20));
         require(rewardToken != IERC20(0), "Rewarder: bad token");
         unlocked = 1;
+
         emit LogInit(rewardToken, owner, rewardPerSecond, masterLpToken);
     }
 
     function onFlakeReward (uint256 pid, address _user, address to, uint256, uint256 lpTokenAmount,bool bHarvest) onlyMCV2 lock override external {
-        require(IMiniChefPool(MASTERCHEF_V2).lpToken(pid) == masterLpToken);
+        require(IMiniChefPool(MASTERCHEF_V2).lpToken(pid) == masterLpToken,"wrong lp token!");
 
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][_user];
