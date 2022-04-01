@@ -12,11 +12,11 @@ import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
 
-interface IMigratorChef {
-    // Take the current LP token address and return the new LP token address.
-    // Migrator should have full access to the caller's LP token.
-    function migrate(IERC20 token) external returns (IERC20);
-}
+//interface IMigratorChef {
+//    // Take the current LP token address and return the new LP token address.
+//    // Migrator should have full access to the caller's LP token.
+//    function migrate(IERC20 token) external returns (IERC20);
+//}
 
 
 /// @notice The (older) MasterChef contract gives out a constant number of FLAKE tokens per block.
@@ -59,7 +59,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     /// @notice Address of FLAKE contract.
     IERC20 public FLAKE;
     // @notice The migrator contract. It has a lot of power. Can only be set through governance (owner).
-    IMigratorChef public migrator;
+   // IMigratorChef public migrator;
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;
@@ -159,24 +159,24 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     /// @notice Set the `migrator` contract. Can only be called by the owner.
     /// @param _migrator The contract address to set.
-    function setMigrator(IMigratorChef _migrator) public onlyOrigin {
-        migrator = _migrator;
-    }
-
-    /// @notice Migrate LP token to another LP contract through the `migrator` contract.
-    /// @param _pid The index of the pool. See `poolInfo`.
-    function migrate(uint256 _pid) public {
-        require(address(migrator) != address(0), "IMiniChefV2: no migrator set");
-        IERC20 _lpToken = lpToken[_pid];
-        uint256 bal = _lpToken.balanceOf(address(this));
-        _lpToken.approve(address(migrator), bal);
-        IERC20 newLpToken = migrator.migrate(_lpToken);
-        require(bal == newLpToken.balanceOf(address(this)), "IMiniChefV2: migrated balance must match");
-        require(addedTokens[address(newLpToken)] == false, "Token already added");
-        addedTokens[address(newLpToken)] = true;
-        addedTokens[address(_lpToken)] = false;
-        lpToken[_pid] = newLpToken;
-    }
+//    function setMigrator(IMigratorChef _migrator) public onlyOrigin {
+//        migrator = _migrator;
+//    }
+//
+//    /// @notice Migrate LP token to another LP contract through the `migrator` contract.
+//    /// @param _pid The index of the pool. See `poolInfo`.
+//    function migrate(uint256 _pid) public {
+//        require(address(migrator) != address(0), "IMiniChefV2: no migrator set");
+//        IERC20 _lpToken = lpToken[_pid];
+//        uint256 bal = _lpToken.balanceOf(address(this));
+//        _lpToken.approve(address(migrator), bal);
+//        IERC20 newLpToken = migrator.migrate(_lpToken);
+//        require(bal == newLpToken.balanceOf(address(this)), "IMiniChefV2: migrated balance must match");
+//        require(addedTokens[address(newLpToken)] == false, "Token already added");
+//        addedTokens[address(newLpToken)] = true;
+//        addedTokens[address(_lpToken)] = false;
+//        lpToken[_pid] = newLpToken;
+//    }
 
     /// @notice View function to see pending FLAKE on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
