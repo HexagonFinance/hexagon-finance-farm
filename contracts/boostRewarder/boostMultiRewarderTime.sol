@@ -58,6 +58,8 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     event LogRewardPerSecond(uint256 rewardPerSecond);
     event LogInit();
 
+    event SetBooster(address indexed booster);
+
     constructor (address _MASTERCHEF_V2,uint256 _pid) public {
         MASTERCHEF_V2 = _MASTERCHEF_V2;
         pid = _pid;
@@ -226,6 +228,7 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
 ///////////////////////////////////////////////////////////////////////////////
     function setBooster(address _booster) public onlyOwner {
         booster = IBoost(_booster);
+        emit SetBooster(_booster);
     }
 
     function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {

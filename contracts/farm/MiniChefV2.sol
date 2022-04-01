@@ -91,6 +91,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accFlakePerShare);
     event LogFlakePerSecond(uint256 flakePerSecond);
 
+    event SetBooster(address indexed booster);
     /// @param _flake The FLAKE token contract address.
     constructor(address _multiSignature,
                // address _origin0,
@@ -392,6 +393,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 ///////////////////////////////////////////////////////////////////////////////
     function setBooster(address _booster) public onlyOrigin {
         booster = IBoost(_booster);
+        emit SetBooster(_booster);
     }
 
     function setRoyaltyReciever(address _royaltyReciever) public onlyOrigin {
