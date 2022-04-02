@@ -120,6 +120,18 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         }
         return (_rewardTokens, _rewardAmounts);
     }
+
+    function rewardRates() external view returns (uint256[] memory) {
+        uint nLen = poolInfos.length;
+        uint256[] memory _rewardRates = new uint256[](nLen);
+
+        for (uint i=0;i<nLen;i++){
+          _rewardRates[i] =  poolInfos[i].rewardPerSecond;
+        }
+
+        return (_rewardRates);
+    }
+
     
     /// @notice Sets the Flake per second to be distributed. Can only be called by the owner.
     /// @param _rewardPerSecond The amount of Flake to be distributed per second.
