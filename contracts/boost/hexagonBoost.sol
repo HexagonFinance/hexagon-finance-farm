@@ -395,14 +395,14 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
         pendingGroup storage userPendings = userUnstakePending[_pid][msg.sender];
         uint256 amount = boostStakedFor(_pid,msg.sender);
-        if(totalsupplies[_pid].sub(amount)>=0) {
+        if(totalsupplies[_pid]>amount) {
             totalsupplies[_pid] = totalsupplies[_pid].sub(amount);
         } else {
             //should not happen
             totalsupplies[_pid] = 0;
         }
 
-        if(totalWithdrawPending[_pid].sub(userPendings.totalPending)>=0) {
+        if(totalWithdrawPending[_pid]>userPendings.totalPending) {
             totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(userPendings.totalPending);
         } else {
             //should not happen
