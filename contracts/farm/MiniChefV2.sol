@@ -91,7 +91,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accFlakePerShare);
     event LogFlakePerSecond(uint256 flakePerSecond);
 
+    event OnBalanceChange(address indexed user, uint256 indexed pid, uint256 amount, bool increase);
+
     event SetBooster(address indexed booster);
+
     /// @param _flake The FLAKE token contract address.
     constructor(address _multiSignature,
                // address _origin0,
@@ -241,10 +244,16 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
             uint256 amount = lpGauges[pid].balanceOf(_usr);
             if (amount > user.amount){
                 depoistPending(pool,pid,amount-user.amount,_usr);
+
+                emit OnBalanceChange(_usr,pid,amount-user.amount, true);
+
             }else if (amount<user.amount){
                 withdrawPending(pool,pid,user.amount-amount,_usr);
+
+                emit OnBalanceChange(_usr,pid,user.amount-amount, false);
             }
         }
+
     }
     /// @notice Deposit LP tokens to MCV2 for FLAKE allocation.
     /// @param pid The index of the pool. See `poolInfo`.
