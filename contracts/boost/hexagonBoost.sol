@@ -348,13 +348,10 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function boostWithdrawPendingRecord(uint256 _pid,address _account,uint256 _startIdx,uint256 _endIdx) public view returns (uint256[] memory,uint256[] memory) {
+        require(_endIdx>=_startIdx,"bad idx,start is bigger than end");
 
         pendingGroup storage userPendings = userUnstakePending[_pid][_account];
         uint256 arrayLen = userPendings.pendingAry.length;
-
-        require(_endIdx>=_startIdx,"bad idx,start is bigger than end");
-        require(_endIdx<=arrayLen,"end idx too big");
-
         if(_endIdx>arrayLen) {
             _endIdx = arrayLen;
         }
