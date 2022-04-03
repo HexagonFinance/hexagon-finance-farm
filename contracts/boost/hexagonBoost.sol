@@ -14,10 +14,6 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     using SafeMath for uint256;
     using BoringERC20 for IERC20;
 
-    modifier notZeroAddress(address inputAddress) {
-        require(inputAddress != address(0), "input zero address");
-        _;
-    }
 
     modifier onlyOrigin() {
         require(msg.sender==safeMulsig, "not setting safe contract");
