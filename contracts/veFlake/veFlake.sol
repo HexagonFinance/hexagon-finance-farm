@@ -13,7 +13,7 @@ contract veFlake is ERC20 {
     string private symbol_;
     uint8  private decimals_;
 
-    uint64 public LeavingTerm = 30 days;
+    uint64 public LeavingTerm = 90 days;
     struct pendingItem {
         uint192 pendingAmount;
         uint64 releaseTime;
