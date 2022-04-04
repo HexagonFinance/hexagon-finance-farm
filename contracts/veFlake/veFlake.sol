@@ -15,6 +15,11 @@ contract veFlake is ERC20 {
         _;
     }
 
+    event Enter(address indexed user, uint256 indexed flakeAmount,uint256 indexed veFlakeAmount);
+    event Leave(address indexed user, uint256 indexed flakeAmount,uint256 indexed veFlakeAmount);
+    event ApplyLeave(address indexed user, uint256 indexed veFlakeAmount);
+    event CancelLeave(address indexed user, uint256 indexed veFlakeAmount);
+
     string private name_;
     string private symbol_;
     uint8  private decimals_;
@@ -78,19 +83,26 @@ contract veFlake is ERC20 {
         // If no veFlake exists, mint it 1:1 to the amount put in
         if (totalShares == 0 || totalFlake == 0) {
             _mint(msg.sender, _amount);
+            emit Enter(msg.sender,_amount,_amount);
         }
         // Calculate and mint the amount of veFlake the flake is worth. The ratio will change overtime, as veFlake is burned/minted and flake deposited + gained from fees / withdrawn.
         else {
             uint256 what = _amount.mul(totalShares).div(totalFlake);
             _mint(msg.sender, what);
+            emit Enter(msg.sender,_amount,what);
         }
 
         // Lock the flake in the contract
         flake.transferFrom(msg.sender, address(this), _amount);
+
+
     }
 
     function leaveApply(uint256 _share) public {
         addPendingInfo(userLeavePendingMap[msg.sender],_share);
+
+        emit ApplyLeave(msg.sender, _share);
+
         require(getAllPendingAmount(userLeavePendingMap[msg.sender])>=_share,"veFlake: Leave insufficient amount");
     }
 
@@ -102,6 +114,8 @@ contract veFlake is ERC20 {
             userPendings.firstIndex = uint64(pendingLength);
             userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
         }
+
+        emit  CancelLeave(msg.sender,userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount);
     }
     // Leave the bar. Claim back your flake.
     // Unlocks the staked + gained flake and burns veFlake
@@ -117,6 +131,9 @@ contract veFlake is ERC20 {
         _burn(msg.sender, _share);
 
         flake.transfer(msg.sender, what);
+
+        emit Leave(msg.sender, what,_share);
+
     }
 
     function searchPendingIndex(pendingItem[] memory pendingAry,uint64 firstIndex,uint64 searchTime) internal pure returns (int256){
@@ -158,7 +175,7 @@ contract veFlake is ERC20 {
         return getAllPendingAmount(userLeavePendingMap[account]);
     }
 
-    function getAllPendingAmount(pendingGroup memory userPendings) internal view returns (uint256){
+    function getAllPendingAmount(pendingGroup memory userPendings) internal pure returns (uint256){
         uint256 len = userPendings.pendingAry.length;
         if(len == 0){
             return 0;
