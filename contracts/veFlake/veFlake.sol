@@ -100,22 +100,22 @@ contract veFlake is ERC20 {
 
     function leaveApply(uint256 _share) public {
         addPendingInfo(userLeavePendingMap[msg.sender],_share);
-
+        transferFrom(msg.sender, address(this), _share);
         emit ApplyLeave(msg.sender, _share);
 
-        require(getAllPendingAmount(userLeavePendingMap[msg.sender])>=_share,"veFlake: Leave insufficient amount");
+        //require(getAllPendingAmount(userLeavePendingMap[msg.sender])>=_share,"veFlake: Leave insufficient amount");
     }
 
     function cancelLeave()public{
         pendingGroup storage userPendings = userLeavePendingMap[msg.sender];
         uint256 pendingLength = userPendings.pendingAry.length;
-        if(pendingLength > 0){
+        require(pendingLength > 0,"veFlake : Empty leave pending queue!");
            // leave();
-            userPendings.firstIndex = uint64(pendingLength);
-            userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
-        }
-
-        emit  CancelLeave(msg.sender,userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount);
+        uint256 amount = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount - userPendings.pendingDebt;
+        transfer(msg.sender,amount);
+        userPendings.firstIndex = uint64(pendingLength);
+        userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
+        emit  CancelLeave(msg.sender,amount);
     }
     // Leave the bar. Claim back your flake.
     // Unlocks the staked + gained flake and burns veFlake
@@ -128,7 +128,7 @@ contract veFlake is ERC20 {
             totalShares
         );
 
-        _burn(msg.sender, _share);
+        _burn(address(this), _share);
 
         flake.transfer(msg.sender, what);
 
