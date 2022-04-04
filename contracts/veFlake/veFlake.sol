@@ -8,6 +8,12 @@ import '../interfaces/IERC20.sol';
 contract veFlake is ERC20 {
     using SafeMath for uint256;
     IERC20 public flake;
+    address public safeMulsig;
+
+    modifier onlyOrigin() {
+        require(msg.sender==safeMulsig, "not mulsafe");
+        _;
+    }
 
     string private name_;
     string private symbol_;
@@ -26,12 +32,21 @@ contract veFlake is ERC20 {
 
     mapping(address=>pendingGroup) internal userLeavePendingMap;
     // Define the token contract
-    constructor(IERC20 _flake,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
-        flake = _flake;
+    constructor(address _multiSignature,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
+        safeMulsig = _multiSignature;
         name_ = tokenName;
         symbol_ = tokenSymbol;
         decimals_ = uint8(tokenDecimal);
     }
+
+    function setFlake(IERC20 _flake) external onlyOrigin{
+        flake = _flake;
+    }
+
+    function setLeavingTerm(uint64 _leavingTerm) external onlyOrigin{
+        LeavingTerm = _leavingTerm;
+    }
+
 
     /**
      * @return the name of the token.
@@ -83,7 +98,7 @@ contract veFlake is ERC20 {
         pendingGroup storage userPendings = userLeavePendingMap[msg.sender];
         uint256 pendingLength = userPendings.pendingAry.length;
         if(pendingLength > 0){
-            leave();
+           // leave();
             userPendings.firstIndex = uint64(pendingLength);
             userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
         }
