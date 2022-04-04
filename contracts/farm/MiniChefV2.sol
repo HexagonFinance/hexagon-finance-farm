@@ -479,13 +479,13 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     }
 
 
-    function boostWithdraw(uint256 _pid) external {
+    function boostWithdraw(uint256 _pid,uint256 _amount) external {
         require(address(booster)!=address(0),"booster is not set");
 
         //need to harvest when boost amount changed
         harvest(_pid, msg.sender);
 
-        booster.boostWithdraw(_pid,msg.sender);
+        booster.boostWithdraw(_pid,msg.sender,_amount);
     }
 
     function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
