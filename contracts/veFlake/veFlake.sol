@@ -13,6 +13,18 @@ contract veFlake is ERC20 {
     string private symbol_;
     uint8  private decimals_;
 
+    uint64 public LeavingTerm = 30 days;
+    struct pendingItem {
+        uint192 pendingAmount;
+        uint64 releaseTime;
+    }
+    struct pendingGroup {
+        pendingItem[] pendingAry;
+        uint192 pendingDebt;
+        uint64 firstIndex;
+    }
+
+    mapping(address=>pendingGroup) internal userLeavePendingMap;
     // Define the token contract
     constructor(IERC20 _flake,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
         flake = _flake;
@@ -62,11 +74,26 @@ contract veFlake is ERC20 {
         flake.transferFrom(msg.sender, address(this), _amount);
     }
 
+    function leaveApply(uint256 _share) public {
+        addPendingInfo(userLeavePendingMap[msg.sender],_share);
+        require(getAllPendingAmount(userLeavePendingMap[msg.sender])>=_share,"veFlake: Leave insufficient amount");
+    }
+
+    function cancelLeave()public{
+        pendingGroup storage userPendings = userLeavePendingMap[msg.sender];
+        uint256 pendingLength = userPendings.pendingAry.length;
+        if(pendingLength > 0){
+            leave();
+            userPendings.firstIndex = uint64(pendingLength);
+            userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
+        }
+    }
     // Leave the bar. Claim back your flake.
     // Unlocks the staked + gained flake and burns veFlake
-    function leave(uint256 _share) public {
+    function leave() public {
         // Gets the amount of veFlake in existence
         uint256 totalShares = totalSupply();
+        uint256 _share = updateUserPending(userLeavePendingMap[msg.sender],LeavingTerm);
         // Calculates the amount of flake the veFlake is worth
         uint256 what = _share.mul(flake.balanceOf(address(this))).div(
             totalShares
@@ -75,5 +102,66 @@ contract veFlake is ERC20 {
         _burn(msg.sender, _share);
 
         flake.transfer(msg.sender, what);
+    }
+
+    function searchPendingIndex(pendingItem[] memory pendingAry,uint64 firstIndex,uint64 searchTime) internal pure returns (int256){
+        uint256 length = pendingAry.length;
+        if (uint256(firstIndex)>=length || pendingAry[firstIndex].releaseTime > searchTime) {
+            return int256(firstIndex) - 1;
+        }
+        uint256 min = firstIndex;
+        uint256 max = length - 1;
+        while (max > min) {
+            uint256 mid = (max + min + 1) / 2;
+            if (pendingAry[mid].releaseTime == searchTime) {
+                min = mid;
+                break;
+            }
+            if (pendingAry[mid].releaseTime < searchTime) {
+                min = mid;
+            } else {
+                max = mid - 1;
+            }
+        }
+        return int256(min);
+    }
+    function addPendingInfo(pendingGroup storage userPendings,uint256 amount) internal {
+        uint256 len = userPendings.pendingAry.length;
+        if (len != 0){
+            amount = amount.add(userPendings.pendingAry[len-1].pendingAmount);
+        }
+        userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
+    }
+    function getReleaseStakeAmount(address account) public view returns (uint256){
+        return getReleasePendingAmount(userLeavePendingMap[account],LeavingTerm);
+    }
+    function getAllPendingAmount(pendingGroup memory userPendings) internal pure returns (uint256){
+        uint256 len = userPendings.pendingAry.length;
+        if(len == 0){
+            return 0;
+        }
+        return SafeMath.sub(userPendings.pendingAry[len-1].pendingAmount,userPendings.pendingDebt);
+    }
+    function getReleasePendingAmount(pendingGroup memory userPendings,uint64 releaseTerm) internal view returns (uint256){
+        uint64 curTime = currentTime()-releaseTerm;
+        int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
+        if (index<int256(userPendings.firstIndex)){
+            return 0;
+        }
+        return SafeMath.sub(userPendings.pendingAry[uint256(index)].pendingAmount,userPendings.pendingDebt);
+    }
+    function updateUserPending(pendingGroup storage userPendings,uint64 releaseTerm)internal returns (uint256){
+        uint64 curTime = currentTime()-releaseTerm;
+        int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
+        if (index<int256(userPendings.firstIndex)){
+            return 0;
+        }
+        userPendings.firstIndex = uint64(index + 1);
+        uint256 amount = SafeMath.sub(userPendings.pendingAry[uint256(index)].pendingAmount,userPendings.pendingDebt);
+        userPendings.pendingDebt = userPendings.pendingAry[uint256(index)].pendingAmount;
+        return amount;
+    }
+    function currentTime() internal view virtual returns(uint64){
+        return uint64(block.timestamp);
     }
 }
