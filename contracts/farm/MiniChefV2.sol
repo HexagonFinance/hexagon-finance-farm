@@ -120,7 +120,30 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function poolLength() public view returns (uint256 pools) {
         pools = poolInfo.length;
     }
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` decimal representation.
+     */
+    function toString(uint256 value) internal pure returns (string memory) {
+        // Inspired by OraclizeAPI's implementation - MIT licence
+        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
 
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
+    }
     /// @notice Add a new LP to the pool. Can only be called by the owner.
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param allocPoint AP of the new pool.
@@ -131,7 +154,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         totalAllocPoint = totalAllocPoint.add(allocPoint);
         lpToken.push(_lpToken);
         rewarder.push(_rewarder);
-        lpGauges.push(new lpGauge("lpGauge","lpGauge",lpToken.length.sub(1)));
+        uint256 _pid = lpToken.length.sub(1);
+        string memory gaugeName = string(abi.encodePacked("lpGauge",toString(_pid)));
+        lpGauges.push(new lpGauge(gaugeName,gaugeName,_pid));
 
         poolInfo.push(PoolInfo({
             allocPoint: allocPoint.to64(),
@@ -139,7 +164,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
             accFlakePerShare: 0
         }));
         addedTokens[address(_lpToken)] = true;
-        emit LogPoolAddition(lpToken.length.sub(1), allocPoint, _lpToken, _rewarder);
+        emit LogPoolAddition(_pid, allocPoint, _lpToken, _rewarder);
     }
 
     /// @notice Update the given pool's FLAKE allocation point and `IRewarder` contract. Can only be called by the owner.
