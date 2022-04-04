@@ -141,6 +141,7 @@ contract veFlake is ERC20 {
         return int256(min);
     }
 
+
     function addPendingInfo(pendingGroup storage userPendings,uint256 amount) internal {
         uint256 len = userPendings.pendingAry.length;
         if (len != 0){
@@ -149,11 +150,15 @@ contract veFlake is ERC20 {
         userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
     }
 
-    function getReleaseStakeAmount(address account) public view returns (uint256){
+    function getUserReleasePendingAmount(address account) public view returns (uint256){
         return getReleasePendingAmount(userLeavePendingMap[account],LeavingTerm);
     }
 
-    function getAllPendingAmount(pendingGroup memory userPendings) internal pure returns (uint256){
+    function getUserAllPendingAmount(address account) external view returns (uint256) {
+        return getAllPendingAmount(userLeavePendingMap[account]);
+    }
+
+    function getAllPendingAmount(pendingGroup memory userPendings) internal view returns (uint256){
         uint256 len = userPendings.pendingAry.length;
         if(len == 0){
             return 0;

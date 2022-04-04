@@ -7,7 +7,7 @@ const RewardMeltToken = artifacts.require("MockToken");
 const assert = require('chai').assert;
 const Web3 = require('web3');
 const BN = require("bignumber.js");
-var utils = require('../utils.js');
+var utils = require('../boostFarm/utils.js');
 
 web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
 
@@ -40,8 +40,9 @@ contract('Saving Pool Farm', function (accounts){
   let rewardPerBlock = new BN(rewardOneDay).div(new BN(bocksPerDay));
   console.log(rewardPerBlock.toString(10));
 
-  let stakeAmount = web3.utils.toWei('10', 'ether');
+  let unstakeAmount = web3.utils.toWei('1', 'ether');
   let startBlock = 0;
+  let unstakeLockTime = 90*24*3600;
 
   let staker1 = accounts[2];
   let staker2 = accounts[3];
@@ -66,200 +67,178 @@ contract('Saving Pool Farm', function (accounts){
   let hour    = 60*60;
   let day     = 24*hour;
   let totalPlan  = 0;
-
-  let farminst;
-
-  let h2o;//stake token
-  let melt;
-
-  let mulSiginst;
-  let oracleinst;
-
-  let startTime;
+  let flake;
+  let veFlake;
 
   before("init", async()=>{
 
-  oracleinst = await Oracle.new();
-  await oracleinst.setOperator(3,accounts[0]);
+      flake = await RewardMeltToken.new("falke token","flake",18);
 
-   //setup multisig
-  let addresses = [accounts[7],accounts[8],accounts[9]];
-  mulSiginst = await MultiSignature.new(addresses,2,{from : accounts[0]});
-  console.log(mulSiginst.address);
-//////////////////////LP POOL SETTING///////////////////////////////////////////////////
-  h2o = await H2oToken.new("h2o",18);
-  await h2o.mint(staker1,VAL_1M);
-  await h2o.mint(staker2,VAL_1M);
+      veFlake = await SavingMinePool.new(accounts[0],"veFalke token","veFlake",18);
+      console.log("pool address:", veFlake.address);
 
-/////////////////////////////reward token///////////////////////////////////////////
-  melt = await RewardMeltToken.new("melt token","melt",18,accounts[0],accounts[1],accounts[2]);
+      await veFlake.setFlake(flake.address,{from:accounts[0]});
 
-//set phxfarm///////////////////////////////////////////////////////////
-  farminst = await SavingMinePool.new(melt.address,mulSiginst.address,operator0,operator1);
-  console.log("pool address:", farminst.address);
-
-
-  let block = await web3.eth.getBlock("latest");
-  startTime = block.timestamp + 1000;
-  console.log("set block time",startTime);
-
-  let endTime = startTime + 3600*24*365;
-//////////////////////////////////////////////////////////////////////////////////////////
-  {
-      let msgData = farminst.contract.methods.setInterestInfo(INTEREST_RATE, 3600).encodeABI();
-      let hash = await utils.createApplication(mulSiginst, operator0, farminst.address, 0, msgData);
-      let index = await mulSiginst.getApplicationCount(hash);
-      index = index.toNumber() - 1;
-      console.log(index);
-
-      await mulSiginst.signApplication(hash, index, {from: accounts[7]});
-      await mulSiginst.signApplication(hash, index, {from: accounts[8]});
-  }
-  //set interest rate
-  res = await farminst.setInterestInfo(INTEREST_RATE,3600,{from:operator0});
-  assert.equal(res.receipt.status,true);
-
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  res = await melt.transfer(farminst.address,VAL_10M,{from:accounts[0]});
-  assert.equal(res.receipt.status,true);
-
-  res = await h2o.mint(farminst.address,VAL_10M);
-  assert.equal(res.receipt.status,true);
-
-      res = await melt.transfer(staker1,VAL_10M,{from:accounts[0]});
-      assert.equal(res.receipt.status,true);
-
-      res = await melt.transfer(staker2,VAL_10M,{from:accounts[0]});
-      assert.equal(res.receipt.status,true);
+      await flake.mint(staker1,VAL_1B);
+      await flake.mint(staker2,VAL_1B);
 
   })
 
   it("[0010] stake in,should pass", async()=>{
-    time.increase(7200);//2000 sec
-    ////////////////////////staker1///////////////////////////////////////////////////////////
-    res = await melt.approve(farminst.address,VAL_1M,{from:staker1});
-    assert.equal(res.receipt.status,true);
-    time.increase(1000);
-
-    res = await farminst.deposit(VAL_1M,{from:staker1});
+    let res = await flake.approve(veFlake.address,VAL_1M,{from:staker1});
     assert.equal(res.receipt.status,true);
 
+    let beforeVeFlakeBal = await veFlake.balanceOf(staker1);
 
-    time.increase(1000);
-    await melt.approve(farminst.address,VAL_1M,{from:staker2});
-    res = await farminst.deposit(VAL_1M,{from:staker2});
+    res = await veFlake.enter(VAL_1M,{from:staker1});
     assert.equal(res.receipt.status,true);
 
+    let afterVeFlakeBal = await veFlake.balanceOf(staker1);
+    let diff = web3.utils.fromWei(afterVeFlakeBal) - web3.utils.fromWei(beforeVeFlakeBal);
 
+    assert.equal(diff,1000000,'balance init is not equal')
   })
 
 
-  it("[0030] stake out,should pass", async()=>{
+  it("[0030] apply stake out,should pass", async()=>{
         console.log("\n\n");
-        let preLpBlance = await melt.balanceOf(staker1);
-        console.log("preLpBlance=" + preLpBlance);
 
-        let preStakeBalance = await farminst.totalStakedFor(staker1);
-        preStakeBalance = (new BN(preStakeBalance.toString(10)).div(new BN(2))).integerValue();
-
-        console.log("pre sc staked for= " + preStakeBalance);
-
-        let res = await farminst.withdraw(preStakeBalance,{from:staker1});
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
         assert.equal(res.receipt.status,true);
 
-        let afterStakeBalance = await farminst.totalStakedFor(staker1);
+        let allPending = await veFlake.getUserAllPendingAmount(staker1);
 
-        console.log("after sc staked for = " + afterStakeBalance);
+        assert.equal(allPending.toString(),unstakeAmount.toString(10));
 
-        let diff = web3.utils.fromWei(new BN(preStakeBalance).toString(10)) - web3.utils.fromWei(afterStakeBalance);
-        console.log("stake balance diff = " + diff);
+        let expired = await veFlake.getUserReleasePendingAmount(staker1);
+        console.log("expire amount",expired.toString(10))
+   })
 
-        let afterLpBlance = await melt.balanceOf(staker1);
-        console.log("afterLpBlance=" + afterLpBlance);
-        let lpdiff = web3.utils.fromWei(afterLpBlance) - web3.utils.fromWei(preLpBlance);
+    it("[0040] stake out,should pass", async()=>{
+        console.log("\n\n");
+        time.increase(unstakeLockTime+1);
+        let beforeVeFlakeBal = await flake.balanceOf(staker1);
+        res = await veFlake.leave({from:staker1});
+        assert.equal(res.receipt.status,true);
 
-        console.log("staked balance "+diff,"lp balance change ="+lpdiff);
+        let allPending = await veFlake.getUserAllPendingAmount(staker1);
+        assert.equal(allPending.toString(),0,"pending should be 0 after leave");
 
-        //assert.equal(lpdiff,web3.utils.fromWei(VAL_1M));
+        let afterVeFlakeBal = await flake.balanceOf(staker1);
+        let diff = web3.utils.fromWei(afterVeFlakeBal) - web3.utils.fromWei(beforeVeFlakeBal);
+
+        assert.equal(diff,1,'balance is not equal 1')
     })
 
 
-
-    it("[0050] get back left mining token,should pass", async()=>{
-
-            let msgData = farminst.contract.methods.getbackLeftMiningToken(staker1).encodeABI();
-            let hash = await utils.createApplication(mulSiginst,operator0,farminst.address,0,msgData);
-
-            let res = await utils.testSigViolation("multiSig getbackLeftMiningToken: This tx is not aprroved",async function(){
-                await farminst.getbackLeftMiningToken(staker1,{from:operator0});
-            });
-            assert.equal(res,false,"should return false")
-
-            let index = await mulSiginst.getApplicationCount(hash);
-            index = index.toNumber()-1;
-            console.log(index);
-
-            await mulSiginst.signApplication(hash,index,{from:accounts[7]})
-            await mulSiginst.signApplication(hash,index,{from:accounts[8]})
-
-
-            console.log("\n\n");
-            let h2opreMineBlance = await h2o.balanceOf(staker1);
-            console.log("h2o preMineBlance=" + h2opreMineBlance);
-
-            let meltpreRecieverBalance = await melt.balanceOf(staker1);
-            console.log("melt prebalance = " + meltpreRecieverBalance);
-
-            // res = await proxy.getbackLeftMiningToken(staker1,{from:accounts[9]});
-            // assert.equal(res.receipt.status,true);
-            res = await utils.testSigViolation("multiSig getback reward token: This tx is aprroved",async function(){
-                await farminst.getbackLeftMiningToken(staker1,{from:operator0});
-            });
-            assert.equal(res,true,"should return false")
-
-            let h2oafterRecieverBalance = await  h2o.balanceOf(staker1);
-            console.log("after h2o mine balance = " + h2oafterRecieverBalance);
-
-            let meltafterRecieverBalance = await  melt.balanceOf(staker1);
-            console.log("after melt mine balance = " + meltafterRecieverBalance);
-
-            let diff = web3.utils.fromWei(h2oafterRecieverBalance) - web3.utils.fromWei(h2opreMineBlance);
-            console.log("h2o getback balance = " + diff);
-
-            diff = web3.utils.fromWei(meltafterRecieverBalance) - web3.utils.fromWei(meltpreRecieverBalance);
-            console.log("melt getback balance = " + diff);
-
-        })
-
-
-    it("[0070] staker2 stake out all,should pass", async()=>{
-        time.increase(200);//2000 sec
+   it("[0050] apply stake out mul times,should pass", async()=>{
         console.log("\n\n");
-        let preLpBlance = await melt.balanceOf(staker2);
-        console.log("preLpBlance=" + preLpBlance);
 
-        let preStakeBalance = await farminst.totalStakedFor(staker2);
-        console.log("pre sc staked for= " + preStakeBalance);
-
-        let res = await farminst.withdraw(new BN("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",16),{from:staker2});
-        console.log(res);
-
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
         assert.equal(res.receipt.status,true);
 
-        let afterStakeBalance = await farminst.totalStakedFor(staker2);
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+        assert.equal(res.receipt.status,true);
 
-        console.log("after sc staked for = " + afterStakeBalance);
+       time.increase(day);
+       res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+       assert.equal(res.receipt.status,true);
 
-        let diff = web3.utils.fromWei(preStakeBalance) - web3.utils.fromWei(afterStakeBalance);
-        console.log("stake balance diff = " + diff);
+       time.increase(day);
+       res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+       assert.equal(res.receipt.status,true);
 
-        let afterLpBlance = await melt.balanceOf(staker2);
-        console.log("afterLpBlance=" + afterLpBlance);
-        let lpdiff = web3.utils.fromWei(afterLpBlance) - web3.utils.fromWei(preLpBlance);
+       let allPending = await veFlake.getUserAllPendingAmount(staker1);
+       console.log("all pending amount:",allPending.toString(10));
 
-        console.log("staked balance "+diff,"lp balance change ="+lpdiff);
+        assert.equal(allPending.toString(),new BN(unstakeAmount.toString(10)).times(new BN(4)));
+    })
 
-        assert.equal(lpdiff>=web3.utils.fromWei(VAL_1M),true);
+
+    it("[0060] stake out 2,keep 2 in pending,should pass", async()=>{
+        console.log("\n\n");
+
+        time.increase(unstakeLockTime-2*day+ 3600);
+        let allPending = await veFlake.getUserReleasePendingAmount(staker1);
+        assert.equal(allPending.toString(),new BN(unstakeAmount.toString(10)).times(new BN(2)).toString(10));
+
+        let beforeVeFlakeBal = await flake.balanceOf(staker1);
+        res = await veFlake.leave({from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let afterVeFlakeBal = await flake.balanceOf(staker1);
+        let diff = web3.utils.fromWei(afterVeFlakeBal) - web3.utils.fromWei(beforeVeFlakeBal);
+
+        assert.equal(diff,2,'balance is not equal 1')
+
+        allPending = await veFlake.getUserAllPendingAmount(staker1);
+        console.log("all pending amount:",allPending.toString(10));
+
+        assert.equal(allPending.toString(),new BN(unstakeAmount.toString(10)).times(new BN(2)));
+
+    })
+
+    it("[0070] leave all,should pass", async()=>{
+        console.log("\n\n");
+
+        time.increase(2*day);
+        let allPending = await veFlake.getUserReleasePendingAmount(staker1);
+        assert.equal(allPending.toString(),new BN(unstakeAmount.toString(10)).times(new BN(2)).toString(10));
+
+        let beforeVeFlakeBal = await flake.balanceOf(staker1);
+        res = await veFlake.leave({from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let afterVeFlakeBal = await flake.balanceOf(staker1);
+        let diff = web3.utils.fromWei(afterVeFlakeBal) - web3.utils.fromWei(beforeVeFlakeBal);
+
+        assert.equal(diff,2,'balance is not equal 2')
+
+        allPending = await veFlake.getUserAllPendingAmount(staker1);
+        console.log("all pending amount:",allPending.toString(10));
+
+        assert.equal(allPending.toString(),0);
+    })
+
+    it("[0080] apply cancel mul times's apply,should pass", async()=>{
+        console.log("\n\n");
+
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        time.increase(day);
+        res = await veFlake.leaveApply(unstakeAmount,{from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        let allPending = await veFlake.getUserAllPendingAmount(staker1);
+        console.log("all pending amount before cancel:",allPending.toString(10));
+
+        assert.equal(allPending.toString(),new BN(unstakeAmount.toString(10)).times(new BN(4)));
+
+        time.increase(unstakeLockTime-2*day+ 3600);
+
+        res = await veFlake.cancelLeave({from:staker1});
+        assert.equal(res.receipt.status,true);
+
+        allPending = await veFlake.getUserAllPendingAmount(staker1);
+        console.log("all pending amount after cancel:",allPending.toString(10));
+
+        assert.equal(allPending.toString(),0);
+
+
+        releasePending = await veFlake.getUserReleasePendingAmount(staker1);
+        assert.equal(releasePending.toString(),0);
     })
 
 
