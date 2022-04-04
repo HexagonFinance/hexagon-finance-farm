@@ -414,64 +414,14 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         royaltyReciever = _royaltyReciever;
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
-        if(address(booster)==address(0)) {
-            return (_pendingFlake,0,0);
-        }
-        //record init reward
-        uint256 incReward = _pendingFlake;
-        uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
-        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
-        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
-
-        return (_pendingFlake,incReward,teamRoyalty);
-    }
-
-    function boostDeposit(uint256 _pid,uint256 _amount) external {
-        require(address(booster)!=address(0),"booster is not set");
-
-        //need to harvest when boost amount changed
-        harvest(_pid, msg.sender);
-
-        booster.boostDeposit(_pid,msg.sender,_amount);
-
-        address boostToken = booster.getBoostToken(_pid);
-        IERC20(boostToken).safeTransferFrom(msg.sender,address(booster), _amount);
-    }
-
-
-    function boostWithdraw(uint256 _pid) external {
-        require(address(booster)!=address(0),"booster is not set");
-        booster.boostWithdraw(_pid,msg.sender);
-    }
-
-    function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
-        require(address(booster)!=address(0),"booster is not set");
-        return booster.boostStakedFor(_pid,_account);
-    }
-
-    function boostTotalStaked(uint256 _pid) external view returns (uint256) {
-        require(address(booster)!=address(0),"booster is not set");
-        return booster.boostTotalStaked(_pid);
-    }
-
-
-    function getPoolId(address _lp) external view returns (uint256) {
-        for(uint256 i=0;i<lpToken.length;i++) {
-            if(_lp==address(lpToken[i])) {
-                return i;
-            }
-        }
-        return uint256(-1);
-    }
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
     function setBoostFunctionPara(uint256 _pid,uint256 _para0,uint256 _para1, uint256 _para2) external onlyOrigin {
         booster.setBoostFunctionPara(_pid,_para0,_para1,_para2);
     }
 
     function setBoostFarmFactorPara(uint256 _pid, uint256 _lockTime, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyOrigin {
         booster.setBoostFarmFactorPara(_pid, _lockTime,  _enableTokenBoost, _boostToken, _minBoostAmount, _maxIncRatio);
+        //init to defualt vault
+        booster.setBoostFunctionPara(_pid,0,0,0);
     }
 
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyOrigin {
@@ -501,5 +451,61 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     function setFixedTeamRatio(uint256 _pid,uint256 _ratio) external onlyOrigin {
         booster.setFixedTeamRatio(_pid,_ratio);
     }
+
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
+        if(address(booster)==address(0)) {
+            return (_pendingFlake,0,0);
+        }
+        //record init reward
+        uint256 incReward = _pendingFlake;
+        uint256 teamRoyalty = 0;
+        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
+        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
+        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+
+        return (_pendingFlake,incReward,teamRoyalty);
+    }
+
+    function boostDeposit(uint256 _pid,uint256 _amount) external {
+        require(address(booster)!=address(0),"booster is not set");
+
+        //need to harvest when boost amount changed
+        harvest(_pid, msg.sender);
+
+        booster.boostDeposit(_pid,msg.sender,_amount);
+
+        address boostToken = booster.getBoostToken(_pid);
+        IERC20(boostToken).safeTransferFrom(msg.sender,address(booster), _amount);
+    }
+
+
+    function boostWithdraw(uint256 _pid) external {
+        require(address(booster)!=address(0),"booster is not set");
+
+        //need to harvest when boost amount changed
+        harvest(_pid, msg.sender);
+
+        booster.boostWithdraw(_pid,msg.sender);
+    }
+
+    function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
+        require(address(booster)!=address(0),"booster is not set");
+        return booster.boostStakedFor(_pid,_account);
+    }
+
+    function boostTotalStaked(uint256 _pid) external view returns (uint256) {
+        require(address(booster)!=address(0),"booster is not set");
+        return booster.boostTotalStaked(_pid);
+    }
+
+    function getPoolId(address _lp) external view returns (uint256) {
+        for(uint256 i=0;i<lpToken.length;i++) {
+            if(_lp==address(lpToken[i])) {
+                return i;
+            }
+        }
+        return uint256(-1);
+    }
+
 
 }
