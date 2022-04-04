@@ -125,6 +125,7 @@ contract veFlake is ERC20 {
         }
         return int256(min);
     }
+
     function addPendingInfo(pendingGroup storage userPendings,uint256 amount) internal {
         uint256 len = userPendings.pendingAry.length;
         if (len != 0){
@@ -132,9 +133,11 @@ contract veFlake is ERC20 {
         }
         userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
     }
+
     function getReleaseStakeAmount(address account) public view returns (uint256){
         return getReleasePendingAmount(userLeavePendingMap[account],LeavingTerm);
     }
+
     function getAllPendingAmount(pendingGroup memory userPendings) internal pure returns (uint256){
         uint256 len = userPendings.pendingAry.length;
         if(len == 0){
@@ -142,6 +145,7 @@ contract veFlake is ERC20 {
         }
         return SafeMath.sub(userPendings.pendingAry[len-1].pendingAmount,userPendings.pendingDebt);
     }
+
     function getReleasePendingAmount(pendingGroup memory userPendings,uint64 releaseTerm) internal view returns (uint256){
         uint64 curTime = currentTime()-releaseTerm;
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
@@ -150,6 +154,7 @@ contract veFlake is ERC20 {
         }
         return SafeMath.sub(userPendings.pendingAry[uint256(index)].pendingAmount,userPendings.pendingDebt);
     }
+
     function updateUserPending(pendingGroup storage userPendings,uint64 releaseTerm)internal returns (uint256){
         uint64 curTime = currentTime()-releaseTerm;
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
@@ -161,6 +166,7 @@ contract veFlake is ERC20 {
         userPendings.pendingDebt = userPendings.pendingAry[uint256(index)].pendingAmount;
         return amount;
     }
+
     function currentTime() internal view virtual returns(uint64){
         return uint64(block.timestamp);
     }

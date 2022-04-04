@@ -16,22 +16,6 @@ contract hexagonBoostStorage is Halt {
     //pid => user => boost token balance
     mapping(uint256=>mapping(address => uint256)) internal balances;
 
-    //pid => totalSupply for boost token
-    mapping(uint256=>uint256) internal totalWithdrawPending;
-
-    struct pendingItem {
-        uint192 pendingAmount;
-        uint64 releaseTime;
-    }
-
-    struct pendingGroup {
-        pendingItem[] pendingAry;
-        uint64 firstIndex;
-        uint256 totalPending;
-    }
-
-    //pid => user => token release time for withdraw
-    mapping(uint256=>mapping(address=>pendingGroup)) public userUnstakePending;
     //pid => user => whitelist user
     mapping(uint256=>mapping(address => bool)) public whiteListLpUserInfo;
 

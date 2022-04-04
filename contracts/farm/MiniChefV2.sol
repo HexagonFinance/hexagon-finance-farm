@@ -308,19 +308,24 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
             _rewarder.onFlakeReward(pid, _usr, _usr, oldAmount, user.amount,false);
         }
     }
+
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of FLAKE rewards.
-    function harvest(uint256 pid, address to) public {
+    function harvest(uint256 pid,address to) public {
+        harvestAccount(pid,msg.sender,to);
+    }
+
+    function harvestAccount(uint256 pid,address account,address to) internal {
         PoolInfo memory pool = updatePool(pid);
-        UserInfo storage user = userInfo[pid][msg.sender];
+        UserInfo storage user = userInfo[pid][account];
         int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
         uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
         /////////////////////////////////////////////////////////////////////////
         //get the reward after boost
         uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount,_pendingFlake);
+        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,account,user.amount,_pendingFlake);
         //for team royalty
         if(teamRoyalty>0&&royaltyReciever!=address(0)) {
             FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
@@ -338,10 +343,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward( pid, msg.sender, to, user.amount, user.amount,true);
+            _rewarder.onFlakeReward( pid, account, to, user.amount, user.amount,true);
         }
 
-        emit Harvest(msg.sender, pid, _pendingFlake,incReward);
+        emit Harvest(account, pid, _pendingFlake,incReward);
     }
 
     /// @notice Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
@@ -435,14 +440,6 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         IERC20(boostToken).safeTransferFrom(msg.sender,address(booster), _amount);
     }
 
-    function boostApplyWithdraw(uint256 _pid,uint256 _amount) external {
-        require(address(booster)!=address(0),"booster is not set");
-
-        //need to harvest when boost amount changed
-        harvest(_pid, msg.sender);
-
-        booster.boostApplyWithdraw(_pid,msg.sender,_amount);
-    }
 
     function boostWithdraw(uint256 _pid) external {
         require(address(booster)!=address(0),"booster is not set");
@@ -459,24 +456,6 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         return booster.boostTotalStaked(_pid);
     }
 
-    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256) {
-        require(address(booster)!=address(0),"booster is not set");
-        return booster.boostTotalWithdrawPendingFor(_pid,_account);
-    }
-
-    function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) external view returns (uint256,uint256) {
-        require(address(booster)!=address(0),"booster is not set");
-        return booster.boostAvailableWithdrawPendingFor(_pid,_account);
-    }
-
-    function cancelAllBoostApplyWithdraw(uint256 _pid) external {
-        require(address(booster)!=address(0),"booster is not set");
-
-        //need to harvest when boost amount changed
-        harvest(_pid, msg.sender);
-
-        return booster.cancelAllBoostApplyWithdraw(_pid,msg.sender);
-    }
 
     function getPoolId(address _lp) external view returns (uint256) {
         for(uint256 i=0;i<lpToken.length;i++) {
@@ -486,4 +465,41 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         }
         return uint256(-1);
     }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+    function setBoostFunctionPara(uint256 _pid,uint256 _para0,uint256 _para1, uint256 _para2) external onlyOrigin {
+        booster.setBoostFunctionPara(_pid,_para0,_para1,_para2);
+    }
+
+    function setBoostFarmFactorPara(uint256 _pid, uint256 _lockTime, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyOrigin {
+        booster.setBoostFarmFactorPara(_pid, _lockTime,  _enableTokenBoost, _boostToken, _minBoostAmount, _maxIncRatio);
+    }
+
+    function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyOrigin {
+        //settle for the user
+        harvest(_pid, _user);
+
+        booster.setWhiteListMemberStatus(_pid,_user,_status);
+    }
+
+    function setWhiteList(uint256 _pid,address[] memory _user) external onlyOrigin {
+        require(_user.length>0,"array length is 0");
+        for(uint256 i=0;i<_user.length;i++) {
+
+            if(booster.whiteListLpUserInfo(_pid,_user[i])) {
+                //settle for the user
+                harvest(_pid, _user[i]);
+            }
+
+            booster.setWhiteListMemberStatus(_pid,_user[i],true);
+        }
+    }
+
+    function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit) external onlyOrigin {
+        booster.setFixedWhitelistPara(_pid,_incRatio,_whiteListfloorLimit);
+    }
+
+    function setFixedTeamRatio(uint256 _pid,uint256 _ratio) external onlyOrigin {
+        booster.setFixedTeamRatio(_pid,_ratio);
+    }
+
 }

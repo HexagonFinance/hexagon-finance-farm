@@ -9,14 +9,20 @@ import "../libraries/SafeMath.sol";
 import "../libraries/proxyOwner.sol";
 import "./hexagonBoostStorage.sol";
 import "../libraries/SmallNumbers.sol";
+import "../interfaces/IMiniChefV2.sol";
 
 contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     using SafeMath for uint256;
     using BoringERC20 for IERC20;
 
 
+    modifier onlyMCV2() {
+        require(msg.sender==farmChef, "not farmChef");
+        _;
+    }
+
     modifier onlyOrigin() {
-        require(msg.sender==safeMulsig, "not setting safe contract");
+        require(msg.sender==safeMulsig, "not mulsafe");
         _;
     }
 
@@ -34,7 +40,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
 
     function setMulsigAndFarmChef ( address _multiSignature,
                                     address _farmChef)
-        public
+        external
         onlyOrigin
     {
         safeMulsig = _multiSignature;
@@ -42,32 +48,23 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     function setFixedTeamRatio(uint256 _pid,uint256 _ratio)
-        public onlyOrigin
+        external onlyMCV2
     {
         boostPara[_pid].fixedTeamRatio = _ratio;
     }
 
     function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit)
-        public onlyOrigin
+        external onlyMCV2
     {
         //_incRatio,0 whiteList increase will stop
         boostPara[_pid].fixedWhitelistRatio = _incRatio;
         boostPara[_pid].whiteListfloorLimit = _whiteListfloorLimit;
     }
 
-    function setWhiteList(uint256 _pid,address[] memory _user)
-        public onlyOrigin
-    {
-        require(_user.length>0,"array length is 0");
-        for(uint256 i=0;i<_user.length;i++) {
-            whiteListLpUserInfo[_pid][_user[i]] = true;
-        }
-    }
-
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)
-     public onlyOrigin
+        external onlyMCV2
     {
-        whiteListLpUserInfo[_pid][_user] = _status;
+            whiteListLpUserInfo[_pid][_user] = _status;
     }
 
     function setBoostFarmFactorPara(uint256 _pid,
@@ -77,7 +74,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
                                     uint256 _minBoostAmount,
                                     uint256 _maxIncRatio)
         external
-        onlyOrigin
+        onlyMCV2
     {
         boostPara[_pid].lockTime = _lockTime;
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
@@ -104,7 +101,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         uint256 _para1,
         uint256 _para2)
         external
-        onlyOrigin
+        onlyMCV2
     {
         //log(5)(amount+LOG_PARA1)- LOG_PARA2
         if(_para0==0) {
@@ -227,8 +224,10 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         }
     }
 
-    function boostDeposit(uint256 _pid,address _account,uint256 _amount) external {
-        require(msg.sender==farmChef,"have no permission");
+    function boostDeposit(uint256 _pid,address _account,uint256 _amount)
+        external onlyMCV2
+    {
+
         require(boostPara[_pid].enableTokenBoost,"pool is not allow boost");
 
         totalsupplies[_pid] = totalsupplies[_pid].add(_amount);
@@ -237,94 +236,26 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         emit BoostDeposit(_pid,_account,_amount);
     }
 
-    function boostApplyWithdraw(uint256 _pid,address _account,uint256 _amount) external{
-        require(msg.sender==farmChef,"have no permission");
+    function boostWithdraw(uint256 _pid,address _account,uint256 _amount)
+        external onlyMCV2
+    {
+        require(balances[_pid][_account]>=_amount);
 
         totalsupplies[_pid] = totalsupplies[_pid].sub(_amount);
-        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].add(_amount);
-
         balances[_pid][_account] = balances[_pid][_account].sub(_amount);
-        uint64 unlockTime = currentTime()+uint64(boostPara[_pid].lockTime);
-        userUnstakePending[_pid][_account].pendingAry.push(pendingItem(uint192(_amount),unlockTime));
 
-        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.add(_amount);
-
-        emit BoostApplyWithdraw(_pid,_account, _amount);
-    }
-
-    function cancelAllBoostApplyWithdraw(uint256 _pid,address _account) external {
-        require(msg.sender==farmChef,"have no permission");
-
-        uint256 pending = userUnstakePending[_pid][_account].totalPending;
-
-        totalsupplies[_pid] = totalsupplies[_pid].add(pending);
-        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(pending);
-
-        balances[_pid][_account] = balances[_pid][_account].add(pending);
-
-        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
-        for(uint64 i=userPendings.firstIndex;i< userPendings.pendingAry.length;i++) {
-            userPendings.pendingAry[i].pendingAmount = 0;
-        }
-
-        userPendings.firstIndex = uint64(userPendings.pendingAry.length);
-        userUnstakePending[_pid][_account].totalPending = 0;
-
-        emit CancelBoostApplyWithdraw(_pid,_account, pending);
-    }
-
-    function boostWithdraw(uint256 _pid,address _account) external {
-        require(msg.sender==farmChef,"have no permission");
-
-        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
-        (uint256 amount,uint256 index) = boostAvailableWithdrawPendingFor(_pid,_account);
-
-        userUnstakePending[_pid][_account].totalPending = userUnstakePending[_pid][_account].totalPending.sub(amount);
-        totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(amount);
-
-        if(amount>0) {
-            for(uint64 i=userPendings.firstIndex;i<index;i++) {
-                userPendings.pendingAry[i].pendingAmount = 0;
-            }
-            userPendings.firstIndex = uint64(index+1);
-            IERC20(boostPara[_pid].boostToken).safeTransfer(_account, amount);
-        }
-
-        emit BoostWithdraw(_pid,_account, amount);
-    }
+        IERC20(boostPara[_pid].boostToken).safeTransfer(_account, _amount);
 
 
-    function boostAvailableWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256,uint256) {
-        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
-
-        uint256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,currentTime());
-        //control tx num lower than 200
-        if(index-userPendings.firstIndex>200) {
-            index = userPendings.firstIndex+200;
-        }
-
-        uint256 amount = 0;
-        for(uint64 i=userPendings.firstIndex;i<index;i++) {
-            amount = amount.add(userPendings.pendingAry[i].pendingAmount);
-        }
-
-        return (amount,index);
+        emit BoostWithdraw(_pid,_account, _amount);
     }
 
     function boostStakedFor(uint256 _pid,address _account) public view returns (uint256) {
         return balances[_pid][_account];
     }
 
-    function boostTotalWithdrawPendingFor(uint256 _pid,address _account) public view returns (uint256) {
-        return userUnstakePending[_pid][_account].totalPending;
-    }
-
     function boostTotalStaked(uint256 _pid) public view returns (uint256){
         return totalsupplies[_pid];
-    }
-
-    function boostTotalWithdrawPending(uint256 _pid) public view returns (uint256){
-        return totalWithdrawPending[_pid];
     }
 
     function isTokenBoost(uint256 _pid) public view returns (bool){
@@ -339,81 +270,4 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
         return  boostPara[_pid].fixedTeamRatio>0;
     }
 
-    function boostWithdrawPendingLength(uint256 _pid,address _account) public view returns (uint256) {
-        return userUnstakePending[_pid][_account].pendingAry.length;
-    }
-
-    function boostWithdrawPendingRecord(uint256 _pid,address _account,uint256 _startIdx,uint256 _endIdx) public view returns (uint256[] memory,uint256[] memory) {
-        require(_endIdx>=_startIdx,"bad idx,start is bigger than end");
-
-        pendingGroup storage userPendings = userUnstakePending[_pid][_account];
-        uint256 arrayLen = userPendings.pendingAry.length;
-        if(_endIdx>arrayLen) {
-            _endIdx = arrayLen;
-        }
-
-        uint256 len = _endIdx - _startIdx;
-        uint256[] memory amountArray = new uint256[](len);
-        uint256[] memory timeArray = new uint256[](len);
-
-        uint256 i=0;
-        for(;i<len;i++) {
-            amountArray[i] = userPendings.pendingAry[i+_startIdx].pendingAmount;
-            timeArray[i] = userPendings.pendingAry[i+_startIdx].pendingAmount;
-        }
-
-        return (amountArray,timeArray);
-    }
-
-    function currentTime() internal view returns(uint64){
-        return uint64(block.timestamp);
-    }
-
-    function searchPendingIndex(pendingItem[] memory pendingAry,uint64 firstIndex,uint64 searchTime)
-        internal
-        pure
-        returns (uint256)
-    {
-        uint256 i=firstIndex;
-        for(;i<pendingAry.length;i++) {
-            if(pendingAry[i].releaseTime > searchTime) {
-                break;
-            }
-        }
-        return i;
-    }
-
-    function setEmergencyWithdraw(uint256 _pid,bool _enable) public onlyOrigin {
-        boostPara[_pid].emergencyWithdraw = _enable;
-    }
-
-    function emergencyWithdraw(uint256 _pid, address _to) public {
-        require(boostPara[_pid].emergencyWithdraw,"do not allow now");
-
-        pendingGroup storage userPendings = userUnstakePending[_pid][msg.sender];
-        uint256 amount = boostStakedFor(_pid,msg.sender);
-        if(totalsupplies[_pid]>amount) {
-            totalsupplies[_pid] = totalsupplies[_pid].sub(amount);
-        } else {
-            //should not happen
-            totalsupplies[_pid] = 0;
-        }
-
-        if(totalWithdrawPending[_pid]>userPendings.totalPending) {
-            totalWithdrawPending[_pid] = totalWithdrawPending[_pid].sub(userPendings.totalPending);
-        } else {
-            //should not happen
-            totalWithdrawPending[_pid] = 0;
-        }
-
-        for(uint256 i=userPendings.firstIndex;i<userPendings.pendingAry.length;i++) {
-            userPendings.pendingAry[i].pendingAmount = 0;
-        }
-
-        amount = amount.add(userPendings.totalPending);
-        userPendings.totalPending = 0;
-        userPendings.firstIndex = uint64(userPendings.pendingAry.length);
-
-        IERC20(boostPara[_pid].boostToken).safeTransfer(_to, amount);
-    }
 }
