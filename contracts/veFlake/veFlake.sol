@@ -100,7 +100,7 @@ contract veFlake is ERC20 {
 
     function leaveApply(uint256 _share) public {
         addPendingInfo(userLeavePendingMap[msg.sender],_share);
-        transferFrom(msg.sender, address(this), _share);
+        _transfer(msg.sender, address(this), _share);
         emit ApplyLeave(msg.sender, _share);
 
         //require(getAllPendingAmount(userLeavePendingMap[msg.sender])>=_share,"veFlake: Leave insufficient amount");
