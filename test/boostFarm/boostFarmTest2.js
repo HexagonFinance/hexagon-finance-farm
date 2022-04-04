@@ -108,16 +108,16 @@ contract('hexgon farm test', function (accounts){
         res = await farminst.setBooster(booster.address);
         assert.equal(res.receipt.status,true);
 /////////////////////////////////////////////////////////////////////////////
-        res = await booster.setFixedTeamRatio(0,new BN(100));//10%
+        res = await farminst.setFixedTeamRatio(0,new BN(100));//10%
         assert.equal(res.receipt.status,true);
 
-        res = await booster.setFixedWhitelistPara(0,new BN(100),WITHTELIST_MINIMUM);//10%,
+        res = await farminst.setFixedWhitelistPara(0,new BN(100),WITHTELIST_MINIMUM);//10%,
         assert.equal(res.receipt.status,true);
 
-        res = await booster.setWhiteList(0,[accounts[8],accounts[9]]);
+        res = await farminst.setWhiteList(0,[accounts[8],accounts[9]]);
         assert.equal(res.receipt.status,true);
 
-        res = await booster.setBoostFarmFactorPara( 0,
+        res = await farminst.setBoostFarmFactorPara( 0,
                                                     lockTime,//uint256 _lockTime,
                                                     enableTokenBoost,    //bool    _enableTokenBoost,
                                                     boostToken.address,     //address _boostToken
@@ -130,7 +130,7 @@ contract('hexgon farm test', function (accounts){
         let para0 = new BN(5);
         let para1 = web3.utils.toWei('500000', 'ether');
         let para2 = new BN(3290000000);
-        res = await booster.setBoostFunctionPara( 0,
+        res = await farminst.setBoostFunctionPara( 0,
                                                   para0,//uint256 _lockTime,
                                                   para1,
                                                   para2
