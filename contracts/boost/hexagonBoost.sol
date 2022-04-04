@@ -27,11 +27,7 @@ contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
     }
 
     constructor ( address _multiSignature,
-                  // address _origin0,
-                  // address _origin1
-                  address _farmChef
-    )
-       /* proxyOwner(_multiSignature, _origin0, _origin1)*/
+                  address _farmChef )
         public
     {
         safeMulsig = _multiSignature;

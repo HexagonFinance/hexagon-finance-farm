@@ -97,10 +97,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
 
     /// @param _flake The FLAKE token contract address.
     constructor(address _multiSignature,
-               // address _origin0,
-               // address _origin1,
                 IERC20 _flake)
-        //proxyOwner(_multiSignature, _origin0, _origin1)
         public
     {
         FLAKE = _flake;
