@@ -49,6 +49,9 @@ contract('hexgon farm test', function (accounts){
     let VAL_1B = web3.utils.toWei('1000000000', 'ether');
     let VAL_10B = web3.utils.toWei('10000000000', 'ether');
 
+    let VAL_2000000 = web3.utils.toWei('20000000', 'ether');
+    let VAL_1000000 = web3.utils.toWei('10000000', 'ether');
+
     let WITHTELIST_MINIMUM = VAL_1M ;
 
     let farminst;
@@ -140,6 +143,29 @@ contract('hexgon farm test', function (accounts){
 
     })
 
+    it("[0001] boost token ratio,should pass", async()=>{
+        res = await boostToken.approve(farminst.address,VAL_10B,{from:staker2});
+        assert.equal(res.receipt.status,true);
+
+        res = await farminst.boostDeposit(0,VAL_2000000,{from:staker2});
+        assert.equal(res.receipt.status,true);
+
+        let tokenBoostRatio = await booster.getUserBoostRatio(0,staker2);
+        let ratio = new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+
+        res = await boostToken.approve(farminst.address,VAL_10B,{from:staker3});
+        assert.equal(res.receipt.status,true);
+
+        res = await farminst.boostDeposit(0,VAL_1000000,{from:staker3});
+        assert.equal(res.receipt.status,true);
+
+        tokenBoostRatio = await booster.getUserBoostRatio(0,staker3);
+         ratio = new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10);
+        console.log(ratio);
+
+    })
+
     it("[0010] check team ratio,should pass", async()=>{
         let teamRatio = await booster.getTeamRatio(0);
         let percent = new BN(teamRatio[0].toString(10)).div(new BN(teamRatio[1].toString(10))).toString(10);
@@ -155,8 +181,9 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
 
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
+
         console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10));
-       // assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
+
     })
 
     it("[0030] boost token ratio,should pass", async()=>{
@@ -183,6 +210,8 @@ contract('hexgon farm test', function (accounts){
         //assert.equal(ratio,"0.078","2000 boost ratio should be same");
 
     })
+
+
 
     it("[0040] MAX ratio,should pass", async()=>{
         res = await boostToken.approve(farminst.address,VAL_1B,{from:staker1});
