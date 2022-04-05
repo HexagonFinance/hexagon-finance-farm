@@ -11,19 +11,13 @@ import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
 
-//interface IMigratorChef {
-//    // Take the current LP token address and return the new LP token address.
-//    // Migrator should have full access to the caller's LP token.
-//    function migrate(IERC20 token) external returns (IERC20);
-//}
-
 
 /// @notice The (older) MasterChef contract gives out a constant number of FLAKE tokens per block.
 /// It is the only address with minting rights for FLAKE.
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
+contract MiniChefV2 is BoringOwnable, BoringBatchable {
     using BoringMath for uint256;
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
@@ -182,26 +176,6 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
         emit LogFlakePerSecond(_flakePerSecond);
     }
 
-    /// @notice Set the `migrator` contract. Can only be called by the owner.
-    /// @param _migrator The contract address to set.
-//    function setMigrator(IMigratorChef _migrator) public onlyOrigin {
-//        migrator = _migrator;
-//    }
-//
-//    /// @notice Migrate LP token to another LP contract through the `migrator` contract.
-//    /// @param _pid The index of the pool. See `poolInfo`.
-//    function migrate(uint256 _pid) public {
-//        require(address(migrator) != address(0), "IMiniChefV2: no migrator set");
-//        IERC20 _lpToken = lpToken[_pid];
-//        uint256 bal = _lpToken.balanceOf(address(this));
-//        _lpToken.approve(address(migrator), bal);
-//        IERC20 newLpToken = migrator.migrate(_lpToken);
-//        require(bal == newLpToken.balanceOf(address(this)), "IMiniChefV2: migrated balance must match");
-//        require(addedTokens[address(newLpToken)] == false, "Token already added");
-//        addedTokens[address(newLpToken)] = true;
-//        addedTokens[address(_lpToken)] = false;
-//        lpToken[_pid] = newLpToken;
-//    }
 
     /// @notice View function to see pending FLAKE on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
@@ -251,9 +225,6 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable /*,proxyOwner*/ {
     }
 
     function onTransfer(uint256 pid,address from,address to) external {
-        //check sender permission
-//        require(address(lpGauges[pid])==msg.sender,"have no permission!");
-
         PoolInfo memory pool = updatePool(pid);
         onBalanceChange(pool,pid,from);
         onBalanceChange(pool,pid,to);

@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
-
-import "../libraries/Halt.sol";
 import "../libraries/SmallNumbers.sol";
 
-contract hexagonBoostStorage is Halt {
+contract hexagonBoostStorage {
     address public safeMulsig;
     address public farmChef;
     uint256 constant public RATIO_DENOM = 1000;

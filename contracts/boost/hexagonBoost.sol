@@ -10,7 +10,7 @@ import "./hexagonBoostStorage.sol";
 import "../libraries/SmallNumbers.sol";
 import "../interfaces/IMiniChefV2.sol";
 
-contract hexagonBoost is hexagonBoostStorage/*,proxyOwner*/{
+contract hexagonBoost is hexagonBoostStorage {
     using SafeMath for uint256;
     using BoringERC20 for IERC20;
 
