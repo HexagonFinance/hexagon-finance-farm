@@ -6,7 +6,6 @@ import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 import "../libraries/SafeMath.sol";
-import "../libraries/proxyOwner.sol";
 import "./hexagonBoostStorage.sol";
 import "../libraries/SmallNumbers.sol";
 import "../interfaces/IMiniChefV2.sol";

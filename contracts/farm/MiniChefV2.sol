@@ -7,7 +7,6 @@ import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 import "../libraries/SignedSafeMath.sol";
-import "../libraries/proxyOwner.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
