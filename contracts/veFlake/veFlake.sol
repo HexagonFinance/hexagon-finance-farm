@@ -52,6 +52,9 @@ contract veFlake is ERC20 {
         LeavingTerm = _leavingTerm;
     }
 
+    function setMulsig(address _multiSignature) external onlyOrigin{
+        safeMulsig = _multiSignature;
+    }
 
     /**
      * @return the name of the token.
