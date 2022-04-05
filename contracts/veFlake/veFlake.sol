@@ -195,6 +195,29 @@ contract veFlake is ERC20 {
         return SafeMath.sub(userPendings.pendingAry[uint256(index)].pendingAmount,userPendings.pendingDebt);
     }
 
+    function getFlakeAmount(uint256 _share) public view returns (uint256) {
+        // Gets the amount of veFlake in existence
+        uint256 totalShares = totalSupply();
+        // Calculates the amount of flake the veFlake is worth
+        return _share.mul(flake.balanceOf(address(this))).div(totalShares);
+
+    }
+
+    function getVeFlakeShare(uint256 _amount) public view returns (uint256) {
+        uint256 totalFlake = flake.balanceOf(address(this));
+        // Gets the amount of veFlake in existence
+        uint256 totalShares = totalSupply();
+        // If no veFlake exists, mint it 1:1 to the amount put in
+        if (totalShares == 0 || totalFlake == 0) {
+            return _amount;
+        }
+        // Calculate and mint the amount of veFlake the flake is worth. The ratio will change overtime, as veFlake is burned/minted and flake deposited + gained from fees / withdrawn.
+        else {
+            return _amount.mul(totalShares).div(totalFlake);
+        }
+    }
+
+
     function updateUserPending(pendingGroup storage userPendings,uint64 releaseTerm)internal returns (uint256){
         uint64 curTime = currentTime()-releaseTerm;
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
