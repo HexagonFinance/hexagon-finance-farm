@@ -236,4 +236,28 @@ contract veFlake is ERC20 {
     function currentTime() internal view virtual returns(uint64){
         return uint64(block.timestamp);
     }
+
+
+    function getLeaveApplyHistory(address account) external view returns(uint256[] memory,uint256[] memory) {
+        pendingGroup memory userPendings = userLeavePendingMap[account];
+        uint256 firstIndex = userPendings.firstIndex;
+
+        uint256 len = userPendings.pendingAry.length - userPendings.firstIndex;
+        uint256[] memory amounts = new uint256[](len);
+        uint256[] memory timeStamps = new uint256[](len);
+
+        for(uint256 i=firstIndex;i<len;i++) {
+            uint256 idx = i-firstIndex;
+            timeStamps[idx] = userPendings.pendingAry[i].releaseTime;
+
+            if(i==firstIndex&&firstIndex==0) {
+                amounts[idx] = userPendings.pendingAry[i].pendingAmount;
+            } else {
+                amounts[idx] = userPendings.pendingAry[i].pendingAmount - userPendings.pendingAry[i-1].pendingAmount;
+            }
+        }
+
+
+        return (amounts,timeStamps);
+    }
 }
