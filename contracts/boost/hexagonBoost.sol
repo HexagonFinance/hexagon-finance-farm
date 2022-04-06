@@ -63,7 +63,6 @@ contract hexagonBoost is hexagonBoostStorage {
     }
 
     function setBoostFarmFactorPara(uint256 _pid,
-                                    uint256 _lockTime,
                                     bool    _enableTokenBoost,
                                     address _boostToken,
                                     uint256 _minBoostAmount,
@@ -71,10 +70,8 @@ contract hexagonBoost is hexagonBoostStorage {
         external
         onlyMCV2
     {
-        boostPara[_pid].lockTime = _lockTime;
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
-        boostPara[_pid].emergencyWithdraw = false;
 
         if(_minBoostAmount==0) {
             boostPara[_pid].minBoostAmount = _minBoostAmount;

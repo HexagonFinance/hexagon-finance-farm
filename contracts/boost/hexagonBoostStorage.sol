@@ -28,9 +28,7 @@ contract hexagonBoostStorage {
         uint256 fixedWhitelistRatio;  //default 20%
         uint256 whiteListfloorLimit; //default 500 thousands
         bool enableTokenBoost;
-        uint256 lockTime;
         address boostToken;
-        bool emergencyWithdraw;
 
         uint256 minBoostAmount;
         uint256 maxIncRatio;//5.5 multiple

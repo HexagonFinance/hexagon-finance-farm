@@ -12,7 +12,7 @@ interface IBoost {
     function getBoostToken(uint256 _pid) external view returns(address);
 
     function setBoostFunctionPara(uint256 _pid,uint256 _para0,uint256 _para1, uint256 _para2) external;
-    function setBoostFarmFactorPara(uint256 _pid, uint256 _lockTime, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external;
+    function setBoostFarmFactorPara(uint256 _pid, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external;
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external;
 
     function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit) external;

@@ -198,6 +198,9 @@ contract veFlake is ERC20 {
     function getFlakeAmount(uint256 _share) public view returns (uint256) {
         // Gets the amount of veFlake in existence
         uint256 totalShares = totalSupply();
+        if(totalShares==0) {
+            return _share;
+        }
         // Calculates the amount of flake the veFlake is worth
         return _share.mul(flake.balanceOf(address(this))).div(totalShares);
 

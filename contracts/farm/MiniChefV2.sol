@@ -410,8 +410,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         booster.setBoostFunctionPara(_pid,_para0,_para1,_para2);
     }
 
-    function setBoostFarmFactorPara(uint256 _pid, uint256 _lockTime, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyOrigin {
-        booster.setBoostFarmFactorPara(_pid, _lockTime,  _enableTokenBoost, _boostToken, _minBoostAmount, _maxIncRatio);
+    function setBoostFarmFactorPara(uint256 _pid, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyOrigin {
+        booster.setBoostFarmFactorPara(_pid,_enableTokenBoost, _boostToken, _minBoostAmount, _maxIncRatio);
         //init to defualt vault
         booster.setBoostFunctionPara(_pid,0,0,0);
     }
