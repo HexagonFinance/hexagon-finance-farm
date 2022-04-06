@@ -121,7 +121,6 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
 
         res = await farminst.setBoostFarmFactorPara( 0,
-            lockTime,//uint256 _lockTime,
             enableTokenBoost,    //bool    _enableTokenBoost,
             boostToken.address,     //address _boostToken
             baseBoostTokenAmount,//uint256 _baseBoostTokenAmount, 1000 ether
