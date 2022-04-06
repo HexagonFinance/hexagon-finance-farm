@@ -250,7 +250,7 @@ contract veFlake is ERC20 {
             uint256 idx = i-firstIndex;
             timeStamps[idx] = userPendings.pendingAry[i].releaseTime;
 
-            if(i==firstIndex&&firstIndex==0) {
+            if(i==0) {
                 amounts[idx] = userPendings.pendingAry[i].pendingAmount;
             } else {
                 amounts[idx] = userPendings.pendingAry[i].pendingAmount - userPendings.pendingAry[i-1].pendingAmount;
