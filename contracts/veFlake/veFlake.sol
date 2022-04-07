@@ -35,7 +35,7 @@ contract veFlake is ERC20 {
         uint64 firstIndex;
     }
 
-    mapping(address=>pendingGroup) internal userLeavePendingMap;
+    mapping(address=>pendingGroup) public userLeavePendingMap;
     // Define the token contract
     constructor(address _multiSignature,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
         safeMulsig = _multiSignature;
