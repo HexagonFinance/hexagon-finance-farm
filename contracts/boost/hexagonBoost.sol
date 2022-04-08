@@ -122,13 +122,13 @@ contract hexagonBoost is hexagonBoostStorage {
        if(isWhiteListBoost(_pid)) {
            whiteListBoostAmount = getWhiteListIncAmount(_pid,_user,_lpamount,_baseamount);
        }
-
-       uint256  tokenBoostAmount = 0;
+        //set initial value
+       uint256  tokenBoostAmount = _baseamount;
        if(isTokenBoost(_pid)) {
-           //increased amount + _baseamount
+           //reset value, increased amount + _baseamount
            tokenBoostAmount = getUserBoostIncAmount(_pid,_user,_baseamount);
-       }
 
+       }
        uint256 totalBoostAmount = tokenBoostAmount.add(whiteListBoostAmount);
 
        if(isTeamRoyalty(_pid)) {
