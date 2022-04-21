@@ -15,6 +15,10 @@ contract FlakeSupply is Ownable{
         tokenAddress = _tokenAddress;
     }
 
+    function setTokenAddress(address _tokenAddress) public onlyOwner{
+        tokenAddress = _tokenAddress;
+    }
+
     function addFixedAddress(address _fixedBalAddress) public onlyOwner{
         fixedBalAddress.push(_fixedBalAddress);
     }
