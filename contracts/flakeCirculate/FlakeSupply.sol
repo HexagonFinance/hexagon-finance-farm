@@ -37,7 +37,7 @@ contract FlakeSupply is Ownable{
         lokcedBalAddress.push(_lockedBalAddress);
     }
 
-    function removeLockeddAddress(address _lokcedBalAddress) public onlyOwner{
+    function removeLockedAddress(address _lokcedBalAddress) public onlyOwner{
         for(uint256 i=0;i<lokcedBalAddress.length;i++) {
             if(lokcedBalAddress[i] == _lokcedBalAddress) {
                 lokcedBalAddress[i] = address(0);
