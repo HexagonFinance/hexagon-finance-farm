@@ -11,7 +11,7 @@ contract FlakeSupply is Ownable{
     address public tokenAddress;
 
     address[] public lockedBalAddress;
-    address[] public lokcedBalAddress;
+    address[] public fixedBalAddress;
 
     constructor(address _tokenAddress) public {
         tokenAddress = _tokenAddress;
@@ -22,25 +22,25 @@ contract FlakeSupply is Ownable{
     }
 
     function addFixedAddress(address _fixedBalAddress) public onlyOwner{
-        lockedBalAddress.push(_fixedBalAddress);
+        fixedBalAddress.push(_fixedBalAddress);
     }
 
     function removeFixedAddress(address _fixedBalAddress) public onlyOwner{
-        for(uint256 i=0;i< lockedBalAddress.length;i++) {
-            if(lockedBalAddress[i] == _fixedBalAddress) {
-                lockedBalAddress[i] = address(0);
+        for(uint256 i=0;i< fixedBalAddress.length;i++) {
+            if(fixedBalAddress[i] == _fixedBalAddress) {
+                fixedBalAddress[i] = address(0);
             }
         }
     }
 
     function addLockedAddress(address _lockedBalAddress) public onlyOwner{
-        lokcedBalAddress.push(_lockedBalAddress);
+        lockedBalAddress.push(_lockedBalAddress);
     }
 
-    function removeLockedAddress(address _lokcedBalAddress) public onlyOwner{
-        for(uint256 i=0;i<lokcedBalAddress.length;i++) {
-            if(lokcedBalAddress[i] == _lokcedBalAddress) {
-                lokcedBalAddress[i] = address(0);
+    function removeLockedAddress(address _lockedBalAddress) public onlyOwner{
+        for(uint256 i=0;i<lockedBalAddress.length;i++) {
+            if(lockedBalAddress[i] == _lockedBalAddress) {
+                lockedBalAddress[i] = address(0);
             }
         }
     }
@@ -51,9 +51,9 @@ contract FlakeSupply is Ownable{
         returns (uint256)
     {
         uint256 fixedTotal = 0;
-        for(uint256 i=0;i< lockedBalAddress.length;i++) {
-            if(lockedBalAddress[i] != address (0)) {
-               uint256 bal = IERC20(tokenAddress).balanceOf(lockedBalAddress[i]);
+        for(uint256 i=0;i< fixedBalAddress.length;i++) {
+            if(fixedBalAddress[i] != address (0)) {
+               uint256 bal = IERC20(tokenAddress).balanceOf(fixedBalAddress[i]);
                fixedTotal = fixedTotal.add(bal);
             }
         }
