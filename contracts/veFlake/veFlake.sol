@@ -115,7 +115,8 @@ contract veFlake is ERC20 {
         require(pendingLength > 0,"veFlake : Empty leave pending queue!");
            // leave();
         uint256 amount = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount - userPendings.pendingDebt;
-        transfer(msg.sender,amount);
+        _transfer(address(this),msg.sender,amount);
+
         userPendings.firstIndex = uint64(pendingLength);
         userPendings.pendingDebt = userPendings.pendingAry[uint256(pendingLength-1)].pendingAmount;
         emit  CancelLeave(msg.sender,amount);
