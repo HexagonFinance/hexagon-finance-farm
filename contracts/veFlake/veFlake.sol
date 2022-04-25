@@ -169,9 +169,15 @@ contract veFlake is ERC20 {
     function addPendingInfo(pendingGroup storage userPendings,uint256 amount) internal {
         uint256 len = userPendings.pendingAry.length;
         if (len != 0){
-            amount = amount.add(userPendings.pendingAry[len-1].pendingAmount);
+            uint64 curTime = currentTime();
+            if (userPendings.pendingAry[len-1].releaseTime == curTime){
+                userPendings.pendingAry[len-1].pendingAmount= uint192(amount.add(userPendings.pendingAry[len-1].pendingAmount));
+            }else{
+                userPendings.pendingAry.push(pendingItem(uint192(amount),curTime));
+            }
+        }else{
+            userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
         }
-        userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
     }
 
     function getUserReleasePendingAmount(address account) public view returns (uint256){

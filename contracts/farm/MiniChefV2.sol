@@ -212,7 +212,7 @@ contract MiniChefV2 {
     /// @return pool Returns the pool that was updated.
     function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
         pool = poolInfo[pid];
-        if (block.timestamp > pool.lastRewardTime) {
+        if (block.timestamp > pool.lastRewardTime && totalAllocPoint > 0) {
             uint256 lpSupply = lpGauges[pid].totalSupply();
             if (lpSupply > 0) {
                 uint256 time = block.timestamp.sub(pool.lastRewardTime);
@@ -390,7 +390,9 @@ contract MiniChefV2 {
         user.rewardDebt = 0;
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false);
+            try _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false){
+            }catch{
+            }
         }
         lpGauges[pid].burn(msg.sender,amount);
         // Note: transfer can fail or succeed if `amount` is zero.
