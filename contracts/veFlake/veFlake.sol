@@ -176,7 +176,7 @@ contract veFlake is ERC20 {
             if (userPendings.pendingAry[len-1].releaseTime == curTime){
                 userPendings.pendingAry[len-1].pendingAmount= toUint192(amount.add(userPendings.pendingAry[len-1].pendingAmount));
             }else{
-                userPendings.pendingAry.push(pendingItem(toUint192(amount),curTime));
+                userPendings.pendingAry.push(pendingItem(toUint192(amount.add(userPendings.pendingAry[len-1].pendingAmount)),curTime));
             }
         }else{
             userPendings.pendingAry.push(pendingItem(toUint192(amount),currentTime()));
@@ -200,7 +200,7 @@ contract veFlake is ERC20 {
     }
 
     function getReleasePendingAmount(pendingGroup memory userPendings,uint64 releaseTerm) internal view returns (uint256){
-        uint64 curTime = currentTime()-releaseTerm;
+        uint64 curTime = uint64(SafeMath.sub(currentTime(),releaseTerm));
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
         if (index<int256(userPendings.firstIndex)){
             return 0;
@@ -235,7 +235,7 @@ contract veFlake is ERC20 {
 
 
     function updateUserPending(pendingGroup storage userPendings,uint64 releaseTerm)internal returns (uint256){
-        uint64 curTime = currentTime()-releaseTerm;
+        uint64 curTime = uint64(SafeMath.sub(currentTime(),releaseTerm));
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
         if (index<int256(userPendings.firstIndex)){
             return 0;
