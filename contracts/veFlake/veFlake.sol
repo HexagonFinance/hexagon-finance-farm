@@ -7,7 +7,7 @@ import '../interfaces/IERC20.sol';
 
 contract veFlake is ERC20 {
     using SafeMath for uint256;
-    IERC20 public flake;
+    IERC20 immutable public flake;
     address public safeMulsig;
 
     modifier onlyOrigin() {
@@ -15,10 +15,10 @@ contract veFlake is ERC20 {
         _;
     }
 
-    event Enter(address indexed user, uint256 indexed flakeAmount,uint256 indexed veFlakeAmount);
-    event Leave(address indexed user, uint256 indexed flakeAmount,uint256 indexed veFlakeAmount);
-    event ApplyLeave(address indexed user, uint256 indexed veFlakeAmount);
-    event CancelLeave(address indexed user, uint256 indexed veFlakeAmount);
+    event Enter(address indexed user, uint256 flakeAmount,uint256 veFlakeAmount);
+    event Leave(address indexed user, uint256 flakeAmount,uint256 veFlakeAmount);
+    event ApplyLeave(address indexed user, uint256 veFlakeAmount);
+    event CancelLeave(address indexed user, uint256 veFlakeAmount);
 
     string private name_;
     string private symbol_;
@@ -37,20 +37,23 @@ contract veFlake is ERC20 {
 
     mapping(address=>pendingGroup) public userLeavePendingMap;
     // Define the token contract
-    constructor(address _multiSignature,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
+    constructor(IERC20 _flake,address _multiSignature,string memory tokenName,string memory tokenSymbol,uint256 tokenDecimal) public {
         safeMulsig = _multiSignature;
+        flake = _flake;
+
         name_ = tokenName;
         symbol_ = tokenSymbol;
         decimals_ = uint8(tokenDecimal);
+
     }
 
-    function setFlake(IERC20 _flake) external onlyOrigin{
-        flake = _flake;
-    }
+//    function setFlake(IERC20 _flake) external onlyOrigin{
+//        flake = _flake;
+//    }
 
-    function setLeavingTerm(uint64 _leavingTerm) external onlyOrigin{
-        LeavingTerm = _leavingTerm;
-    }
+//    function setLeavingTerm(uint64 _leavingTerm) external onlyOrigin{
+//        LeavingTerm = _leavingTerm;
+//    }
 
     function setMulsig(address _multiSignature) external onlyOrigin{
         safeMulsig = _multiSignature;
@@ -247,7 +250,7 @@ contract veFlake is ERC20 {
         uint256[] memory amounts = new uint256[](len);
         uint256[] memory timeStamps = new uint256[](len);
 
-        for(uint256 i=firstIndex;i<len;i++) {
+        for(uint256 i=firstIndex;i<userPendings.pendingAry.length;i++) {
             uint256 idx = i-firstIndex;
             timeStamps[idx] = userPendings.pendingAry[i].releaseTime;
 

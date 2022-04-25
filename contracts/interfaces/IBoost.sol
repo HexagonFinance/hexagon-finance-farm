@@ -17,7 +17,7 @@ interface IBoost {
 
     function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit) external;
     function setFixedTeamRatio(uint256 _pid,uint256 _ratio) external;
-    function setMulsigAndFarmChef ( address _multiSignature,  address _farmChef) external;
+    //function setMulsigAndFarmChef ( address _multiSignature,  address _farmChef) external;
 
     function whiteListLpUserInfo(uint256 _pid,address _user) external view returns (bool);
 

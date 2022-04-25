@@ -16,18 +16,18 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
 
     uint256 public chefPid;
     IBoost public booster;
-    IERC20 public masterLpToken;
+
+    IERC20 immutable public masterLpToken;
 
     /// @notice Info of each MCV2 user.
-    /// `amount` LP token amount the user has provided.
     /// `rewardDebt` The amount of Flake entitled to the user.
     struct UserInfo {
         uint256 rewardDebt;
         uint256 unpaidRewards;
+        uint256 unpaidTokens;
     }
 
     /// @notice Info of each MCV2 pool.
-    /// `allocPoint` The amount of allocation points assigned to the pool.
     /// Also known as the amount of Flake to distribute per block.
     struct PoolInfo {
         uint128 accFlakePerShare;
@@ -43,7 +43,7 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     /// @notice Info of each user that stakes LP tokens.
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
 
-    address private immutable MASTERCHEF_V2;
+    address public immutable MASTERCHEF_V2;
     uint256 private constant ACC_TOKEN_PRECISION = 1e12;
     uint256 internal unlocked;
     modifier lock() {
@@ -84,24 +84,34 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         UserInfo storage user = userInfo[index][_user];
         uint256 pending;
         if (oldAmount > 0) {
+
             pending =
                 (oldAmount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
                     user.rewardDebt
                 ).add(user.unpaidRewards);
-                //for boost pending1
-            (pending,,) = boostRewardAndGetTeamRoyalty(index,_user,oldAmount,pending);
 
             uint256 balance = pool.rewardToken.balanceOf(address(this));
             if (!bHarvest){
                 user.unpaidRewards = pending;
             }else{
+                //for boost pending1
+                (uint256 boostPending,,) = boostRewardAndGetTeamRoyalty(index,_user,oldAmount,pending);
                 if (pending > balance) {
+                    user.unpaidRewards = pending.sub(balance);
+                    user.unpaidTokens = boostPending.sub(balance);
+
                     pool.rewardToken.safeTransfer(to, balance);
-                    user.unpaidRewards = pending - balance;
                 } else {
-                    pool.rewardToken.safeTransfer(to, pending);
+                    boostPending = boostPending.add(user.unpaidTokens);
+                    if (boostPending > balance) {
+                        user.unpaidTokens = boostPending.sub(balance);
+                        pool.rewardToken.safeTransfer(to, balance);
+                    } else {
+                        pool.rewardToken.safeTransfer(to, boostPending);
+                        user.unpaidTokens = 0;}
+                    }
+
                     user.unpaidRewards = 0;
-                }
             }
         }
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;
@@ -157,26 +167,18 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     /// DO NOT add the same LP token more than once. Rewards will be messed up if you do.
     /// @param rewardToken AP of the new pool.
     /// @param _rewardPerSecond Pid on MCV2
-    function add(address rewardToken,uint256 _rewardPerSecond) public onlyOwner {
+    function add(IERC20 rewardToken,uint256 _rewardPerSecond) public onlyOwner {
         uint256 lastRewardTime = block.timestamp;
         poolInfos.push(PoolInfo({
             rewardPerSecond: _rewardPerSecond,
             lastRewardTime: lastRewardTime.to64(),
             accFlakePerShare: 0,
-            rewardToken:IERC20(rewardToken)
+            rewardToken: rewardToken
         }));
         
-        emit LogPoolAddition(poolInfos.length-1, rewardToken,_rewardPerSecond);
+        emit LogPoolAddition(poolInfos.length-1, address(rewardToken),_rewardPerSecond);
     }
 
-    /// @notice Update the given pool's Flake allocation point and `IRewarder` contract. Can only be called by the owner.
-    /// @param _pid The index of the pool. See `poolInfo`.
-    /// @param _rewardPerSecond New reward per second of the pool.
-//    function set(uint256 _pid, uint256 _rewardPerSecond) public onlyOwner {
-//        require(poolInfos.length>_pid,"rewarder : pid is not overflow!");
-//        poolInfos[_pid].rewardPerSecond = _rewardPerSecond;
-//        emit LogSetPool(_pid, _rewardPerSecond);
-//    }
 
     /// @notice Allows owner to reclaim/withdraw any tokens (including reward tokens) held by this contract
     /// @param token Token to reclaim, use 0x00 for Ethereum
@@ -246,9 +248,9 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         IMiniChefPool(MASTERCHEF_V2).lpGauges(chefPid).totalSupply();
     }
 ///////////////////////////////////////////////////////////////////////////////
-    function setBooster(address _booster) public onlyOwner {
-        booster = IBoost(_booster);
-        emit SetBooster(_booster);
+    function setBooster(IBoost _booster) public onlyOwner {
+        booster = _booster;
+        emit SetBooster(address(_booster));
     }
 
     function boostRewardAndGetTeamRoyalty(uint256 _chefPid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {

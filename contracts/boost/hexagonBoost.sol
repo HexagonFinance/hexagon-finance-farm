@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
-import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
+//import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
 import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+//import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 import "../libraries/SafeMath.sol";
 import "./hexagonBoostStorage.sol";
@@ -33,19 +33,21 @@ contract hexagonBoost is hexagonBoostStorage {
         farmChef = _farmChef;
     }
 
-    function setMulsigAndFarmChef ( address _multiSignature,
-                                    address _farmChef)
-        external
-        onlyOrigin
-    {
-        safeMulsig = _multiSignature;
-        farmChef = _farmChef;
-    }
+//    function setMulsigAndFarmChef ( address _multiSignature,
+//                                    address _farmChef)
+//        external
+//        onlyOrigin
+//    {
+//        safeMulsig = _multiSignature;
+//        farmChef = _farmChef;
+//    }
 
     function setFixedTeamRatio(uint256 _pid,uint256 _ratio)
         external onlyMCV2
     {
         boostPara[_pid].fixedTeamRatio = _ratio;
+
+        emit SetFixedTeamRatio(_pid,_ratio);
     }
 
     function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit)
@@ -54,12 +56,17 @@ contract hexagonBoost is hexagonBoostStorage {
         //_incRatio,0 whiteList increase will stop
         boostPara[_pid].fixedWhitelistRatio = _incRatio;
         boostPara[_pid].whiteListfloorLimit = _whiteListfloorLimit;
+
+        emit SetFixedWhitelistPara(_pid,_incRatio,_whiteListfloorLimit);
     }
 
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)
         external onlyMCV2
     {
-            whiteListLpUserInfo[_pid][_user] = _status;
+        whiteListLpUserInfo[_pid][_user] = _status;
+
+        emit SetWhiteListMemberStatus(_pid,_user,_status);
+
     }
 
     function setBoostFarmFactorPara(uint256 _pid,
@@ -73,19 +80,20 @@ contract hexagonBoost is hexagonBoostStorage {
         boostPara[_pid].enableTokenBoost = _enableTokenBoost;
         boostPara[_pid].boostToken = _boostToken;
 
-        if(_minBoostAmount==0) {
+        if(_minBoostAmount!=0) {
             boostPara[_pid].minBoostAmount = _minBoostAmount;
         } else {
             boostPara[_pid].minBoostAmount = 500 ether;
         }
 
-        if(_maxIncRatio==0) {
-            boostPara[_pid].maxIncRatio = 50*SmallNumbers.FIXED_ONE;
-        } else {
+        if(_maxIncRatio!=0) {
             boostPara[_pid].maxIncRatio = _maxIncRatio;
+        } else {
+            boostPara[_pid].maxIncRatio = 50*SmallNumbers.FIXED_ONE;
         }
 
-        IERC20(boostPara[_pid].boostToken).approve(farmChef,uint256(-1));
+        //IERC20(boostPara[_pid].boostToken).approve(farmChef,uint256(-1));
+        emit SetBoostFarmFactorPara(_pid, _enableTokenBoost, _boostToken, boostPara[_pid].minBoostAmount, boostPara[_pid].maxIncRatio);
     }
 
     function setBoostFunctionPara(uint256 _pid,
@@ -113,10 +121,12 @@ contract hexagonBoost is hexagonBoostStorage {
         } else {
             boostPara[_pid].log_para2 = _para2;
         }
+
+        emit SetBoostFunctionPara(_pid,boostPara[_pid].log_para0,boostPara[_pid].log_para1,boostPara[_pid].log_para2);
     }
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     function getTotalBoostedAmount(uint256 _pid,address _user,uint256 _lpamount,uint256 _baseamount)
-        public view returns(uint256,uint256)
+        external view returns(uint256,uint256)
     {
        uint256 whiteListBoostAmount = 0;
        if(isWhiteListBoost(_pid)) {
@@ -140,7 +150,7 @@ contract hexagonBoost is hexagonBoostStorage {
     }
 
     function getTeamRatio(uint256 _pid)
-        public view returns(uint256,uint256)
+        external view returns(uint256,uint256)
     {
           return (boostPara[_pid].fixedTeamRatio,RATIO_DENOM);
     }
@@ -242,11 +252,11 @@ contract hexagonBoost is hexagonBoostStorage {
         emit BoostWithdraw(_pid,_account, _amount);
     }
 
-    function boostStakedFor(uint256 _pid,address _account) public view returns (uint256) {
+    function boostStakedFor(uint256 _pid,address _account) external view returns (uint256) {
         return balances[_pid][_account];
     }
 
-    function boostTotalStaked(uint256 _pid) public view returns (uint256){
+    function boostTotalStaked(uint256 _pid) external view returns (uint256){
         return totalsupplies[_pid];
     }
 

@@ -4,8 +4,7 @@ pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringMath.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
-import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
+
 import "../libraries/SignedSafeMath.sol";
 import "../interfaces/IRewarder.sol";
 import "./lpGauge.sol";
@@ -17,7 +16,7 @@ import "../interfaces/IBoost.sol";
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
-contract MiniChefV2 is BoringOwnable, BoringBatchable {
+contract MiniChefV2 {
     using BoringMath for uint256;
     using BoringMath128 for uint128;
     using BoringERC20 for IERC20;
@@ -33,7 +32,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     /// @notice Info of each MCV2 pool.
     /// `allocPoint` The amount of allocation points assigned to the pool.
-    /// Also known as the amount of FLAKE to distribute per block.
+
     struct PoolInfo {
         uint128 accFlakePerShare;
         uint64 lastRewardTime;
@@ -41,10 +40,10 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     }
 
     IBoost public booster;
-    address public royaltyReciever;
+    address public royaltyReceiver;
     address public safeMulsig;
     //for test or use safe mulsig
-    modifier onlyOrigin() {
+    modifier onlyMultisig() {
         require(msg.sender==safeMulsig, "not setting safe contract");
         _;
     }
@@ -97,17 +96,17 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         safeMulsig = _multiSignature;
     }
 
-    function setMulsigAndRewardToken(address _multiSignature,
-                                     address _flake)
-        onlyOrigin
-        public
-    {
-        FLAKE = IERC20(_flake);
-        safeMulsig = _multiSignature;
-    }
+//    function setMulsigAndRewardToken(address _multiSignature,
+//                                     address _flake)
+//        onlyMultisig
+//        public
+//    {
+//        FLAKE = IERC20(_flake);
+//        safeMulsig = _multiSignature;
+//    }
 
     /// @notice Returns the number of MCV2 pools.
-    function poolLength() public view returns (uint256 pools) {
+    function poolLength() external view returns (uint256 pools) {
         pools = poolInfo.length;
     }
     /**
@@ -139,7 +138,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param allocPoint AP of the new pool.
     /// @param _lpToken Address of the LP ERC-20 token.
     /// @param _rewarder Address of the rewarder delegate.
-    function add(uint256 allocPoint, IERC20 _lpToken, IRewarder _rewarder) public onlyOrigin {
+    function add(uint256 allocPoint, IERC20 _lpToken, IRewarder _rewarder) external onlyMultisig {
         require(addedTokens[address(_lpToken)] == false, "Token already added");
         totalAllocPoint = totalAllocPoint.add(allocPoint);
         lpToken.push(_lpToken);
@@ -162,7 +161,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param _allocPoint New AP of the pool.
     /// @param _rewarder Address of the rewarder delegate.
     /// @param overwrite True if _rewarder should be `set`. Otherwise `_rewarder` is ignored.
-    function set(uint256 _pid, uint256 _allocPoint, IRewarder _rewarder, bool overwrite) public onlyOrigin {
+    function set(uint256 _pid, uint256 _allocPoint, IRewarder _rewarder, bool overwrite) external onlyMultisig {
+        updatePool(_pid);
+
         totalAllocPoint = totalAllocPoint.sub(poolInfo[_pid].allocPoint).add(_allocPoint);
         poolInfo[_pid].allocPoint = _allocPoint.to64();
         if (overwrite) { rewarder[_pid] = _rewarder; }
@@ -171,7 +172,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
 
     /// @notice Sets the FLAKE per second to be distributed. Can only be called by the owner.
     /// @param _flakePerSecond The amount of FLAKE to be distributed per second.
-    function setFlakePerSecond(uint256 _flakePerSecond) public onlyOrigin {
+    function setFlakePerSecond(uint256 _flakePerSecond) external onlyMultisig {
         flakePerSecond = _flakePerSecond;
         emit LogFlakePerSecond(_flakePerSecond);
     }
@@ -186,7 +187,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         UserInfo storage user = userInfo[_pid][_user];
         uint256 accFlakePerShare = pool.accFlakePerShare;
         uint256 lpSupply = lpGauges[_pid].totalSupply();
-        if (block.timestamp > pool.lastRewardTime && lpSupply != 0) {
+        if (block.timestamp > pool.lastRewardTime && lpSupply != 0 && totalAllocPoint > 0) {
             uint256 time = block.timestamp.sub(pool.lastRewardTime);
             uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
             accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply);
@@ -235,9 +236,9 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
             UserInfo storage user = userInfo[pid][_usr];
             uint256 amount = lpGauges[pid].balanceOf(_usr);
             if (amount > user.amount){
-                depoistPending(pool,pid,amount-user.amount,_usr);
+                depositPending(pool,pid,amount-user.amount,_usr);
 
-                emit OnBalanceChange(_usr,pid,amount-user.amount, true);
+                emit OnBalanceChange(_usr,pid,amount.sub(user.amount), true);
 
             }else if (amount<user.amount){
                 withdrawPending(pool,pid,user.amount-amount,_usr);
@@ -251,18 +252,18 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to deposit.
     /// @param to The receiver of `amount` deposit benefit.
-    function deposit(uint256 pid, uint256 amount, address to) public {
+    function deposit(uint256 pid, uint256 amount, address to) external {
         PoolInfo memory pool = updatePool(pid);
         //UserInfo storage user = userInfo[pid][to];
 
-        depoistPending(pool,pid,amount,to);
+        depositPending(pool,pid,amount,to);
         lpGauges[pid].mint(to,amount);
         lpToken[pid].safeTransferFrom(msg.sender, address(this), amount);
 
         emit Deposit(msg.sender, pid, amount, to);
     }
 
-    function depoistPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal {
+    function depositPending(PoolInfo memory pool,uint256 pid, uint256 amount, address to)internal {
         UserInfo storage user = userInfo[pid][to];
         uint256 oldAmount = user.amount;
         user.amount = user.amount.add(amount);
@@ -278,7 +279,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
     /// @param to Receiver of the LP tokens.
-    function withdraw(uint256 pid, uint256 amount, address to) public {
+    function withdraw(uint256 pid, uint256 amount, address to) external {
         PoolInfo memory pool = updatePool(pid);
         withdrawPending(pool,pid,amount,msg.sender);
         lpGauges[pid].burn(msg.sender,amount);
@@ -319,8 +320,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         uint256 teamRoyalty = 0;
         (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,account,user.amount,_pendingFlake);
         //for team royalty
-        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
-            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
+        if(teamRoyalty>0&& royaltyReceiver !=address(0)) {
+            FLAKE.safeTransfer(royaltyReceiver, teamRoyalty);
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -357,8 +358,8 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         uint256 teamRoyalty = 0;
         (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount,_pendingFlake);
         //for team royalty
-        if(teamRoyalty>0&&royaltyReciever!=address(0)) {
-            FLAKE.safeTransfer(royaltyReciever, teamRoyalty);
+        if(teamRoyalty>0&& royaltyReceiver !=address(0)) {
+            FLAKE.safeTransfer(royaltyReceiver, teamRoyalty);
         }
         //////////////////////////////////////////////////////////////////////////
         // Effects
@@ -382,7 +383,7 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param to Receiver of the LP tokens.
-    function emergencyWithdraw(uint256 pid, address to) public {
+    function emergencyWithdraw(uint256 pid, address to) external {
         UserInfo storage user = userInfo[pid][msg.sender];
         uint256 amount = user.amount;
         user.amount = 0;
@@ -397,33 +398,33 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         emit EmergencyWithdraw(msg.sender, pid, amount, to);
     }
 ///////////////////////////////////////////////////////////////////////////////
-    function setBooster(address _booster) public onlyOrigin {
+    function setBooster(address _booster) external onlyMultisig {
         booster = IBoost(_booster);
         emit SetBooster(_booster);
     }
 
-    function setRoyaltyReciever(address _royaltyReciever) public onlyOrigin {
-        royaltyReciever = _royaltyReciever;
+    function setRoyaltyReciever(address _royaltyReciever) external onlyMultisig {
+        royaltyReceiver = _royaltyReciever;
     }
 
-    function setBoostFunctionPara(uint256 _pid,uint256 _para0,uint256 _para1, uint256 _para2) external onlyOrigin {
+    function setBoostFunctionPara(uint256 _pid,uint256 _para0,uint256 _para1, uint256 _para2) external onlyMultisig {
         booster.setBoostFunctionPara(_pid,_para0,_para1,_para2);
     }
 
-    function setBoostFarmFactorPara(uint256 _pid, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyOrigin {
+    function setBoostFarmFactorPara(uint256 _pid, bool  _enableTokenBoost, address _boostToken, uint256 _minBoostAmount, uint256 _maxIncRatio) external onlyMultisig {
         booster.setBoostFarmFactorPara(_pid,_enableTokenBoost, _boostToken, _minBoostAmount, _maxIncRatio);
-        //init to defualt vault
+        //init to default value
         booster.setBoostFunctionPara(_pid,0,0,0);
     }
 
-    function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyOrigin {
+    function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyMultisig {
         //settle for the user
         harvest(_pid, _user);
 
         booster.setWhiteListMemberStatus(_pid,_user,_status);
     }
 
-    function setWhiteList(uint256 _pid,address[] memory _user) external onlyOrigin {
+    function setWhiteList(uint256 _pid,address[] memory _user) external onlyMultisig {
         require(_user.length>0,"array length is 0");
         for(uint256 i=0;i<_user.length;i++) {
 
@@ -436,11 +437,11 @@ contract MiniChefV2 is BoringOwnable, BoringBatchable {
         }
     }
 
-    function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit) external onlyOrigin {
+    function setFixedWhitelistPara(uint256 _pid,uint256 _incRatio,uint256 _whiteListfloorLimit) external onlyMultisig {
         booster.setFixedWhitelistPara(_pid,_incRatio,_whiteListfloorLimit);
     }
 
-    function setFixedTeamRatio(uint256 _pid,uint256 _ratio) external onlyOrigin {
+    function setFixedTeamRatio(uint256 _pid,uint256 _ratio) external onlyMultisig {
         booster.setFixedTeamRatio(_pid,_ratio);
     }
 

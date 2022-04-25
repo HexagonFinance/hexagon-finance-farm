@@ -21,18 +21,18 @@ contract lpGauge is BoringOwnable{
     uint8   public constant decimals = 18;
     // The total supply of this coin
     uint256 public totalSupply;
-    uint256 public pid;
+    uint256 immutable public pid;
 
     // Mapping of coin balances
     mapping (address => uint256)                      public balanceOf;
     // Mapping of allowances
     mapping (address => mapping (address => uint256)) public allowance;
     // Mapping of nonces used for permits
-    mapping (address => uint256)                      public nonces;
+  //  mapping (address => uint256)                      public nonces;
 
     // --- Events ---
-    event AddAuthorization(address account);
-    event RemoveAuthorization(address account);
+    //event AddAuthorization(address account);
+    //event RemoveAuthorization(address account);
     event Approval(address indexed src, address indexed guy, uint256 amount);
     event Transfer(address indexed src, address indexed dst, uint256 amount);
 
@@ -71,9 +71,10 @@ contract lpGauge is BoringOwnable{
     function transferFrom(address src, address dst, uint256 amount)
         public returns (bool)
     {
-        require(dst != address(0), "Coin/null-dst");
-        require(dst != address(this), "Coin/dst-cannot-be-this-contract");
-        require(balanceOf[src] >= amount, "Coin/insufficient-balance");
+        require(dst != address(0), "zero dst address");
+        require(dst != address(this), "dst address cannot be this token contract");
+        require(balanceOf[src] >= amount, "insufficient balance");
+
         if (src != msg.sender && allowance[src][msg.sender] != uint256(-1)) {
             require(allowance[src][msg.sender] >= amount, "Coin/insufficient-allowance");
             allowance[src][msg.sender] = subtract(allowance[src][msg.sender], amount);
@@ -100,7 +101,7 @@ contract lpGauge is BoringOwnable{
     * @param amount The amount of coins to burn
     */
     function burn(address usr, uint256 amount) onlyOwner external {
-        require(balanceOf[usr] >= amount, "Coin/insufficient-balance");
+        require(balanceOf[usr] >= amount, "insufficient balance");
         balanceOf[usr] = subtract(balanceOf[usr], amount);
         totalSupply    = subtract(totalSupply, amount);
         if (owner != msg.sender){
