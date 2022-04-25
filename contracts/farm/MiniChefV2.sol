@@ -50,8 +50,6 @@ contract MiniChefV2 {
 
     /// @notice Address of FLAKE contract.
     IERC20 public FLAKE;
-    // @notice The migrator contract. It has a lot of power. Can only be set through governance (owner).
-   // IMigratorChef public migrator;
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;

@@ -108,10 +108,11 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
                         pool.rewardToken.safeTransfer(to, balance);
                     } else {
                         pool.rewardToken.safeTransfer(to, boostPending);
-                        user.unpaidTokens = 0;}
+                        user.unpaidTokens = 0;
                     }
+                }
 
-                    user.unpaidRewards = 0;
+                user.unpaidRewards = 0;
             }
         }
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;
