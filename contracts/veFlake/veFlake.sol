@@ -46,7 +46,10 @@ contract veFlake is ERC20 {
         decimals_ = uint8(tokenDecimal);
 
     }
-
+    function toUint192(uint256 a) internal pure returns (uint192 c) {
+        require(a <= uint192(-1), "BoringMath: uint192 Overflow");
+        c = uint192(a);
+    }
 //    function setFlake(IERC20 _flake) external onlyOrigin{
 //        flake = _flake;
 //    }
@@ -171,12 +174,12 @@ contract veFlake is ERC20 {
         if (len != 0){
             uint64 curTime = currentTime();
             if (userPendings.pendingAry[len-1].releaseTime == curTime){
-                userPendings.pendingAry[len-1].pendingAmount= uint192(amount.add(userPendings.pendingAry[len-1].pendingAmount));
+                userPendings.pendingAry[len-1].pendingAmount= toUint192(amount.add(userPendings.pendingAry[len-1].pendingAmount));
             }else{
-                userPendings.pendingAry.push(pendingItem(uint192(amount),curTime));
+                userPendings.pendingAry.push(pendingItem(toUint192(amount),curTime));
             }
         }else{
-            userPendings.pendingAry.push(pendingItem(uint192(amount),currentTime()));
+            userPendings.pendingAry.push(pendingItem(toUint192(amount),currentTime()));
         }
     }
 
