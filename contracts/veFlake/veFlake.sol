@@ -91,6 +91,7 @@ contract veFlake is ERC20 {
         uint256 totalShares = totalSupply();
         // If no veFlake exists, mint it 1:1 to the amount put in
         if (totalShares == 0 || totalFlake == 0) {
+            require(_amount > 1 ether,"the init amount is too small");
             _mint(msg.sender, _amount);
             emit Enter(msg.sender,_amount,_amount);
         }

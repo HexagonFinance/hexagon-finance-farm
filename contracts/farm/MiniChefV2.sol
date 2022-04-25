@@ -234,14 +234,14 @@ contract MiniChefV2 {
             UserInfo storage user = userInfo[pid][_usr];
             uint256 amount = lpGauges[pid].balanceOf(_usr);
             if (amount > user.amount){
-                depositPending(pool,pid,amount-user.amount,_usr);
+                depositPending(pool,pid,amount.sub(user.amount),_usr);
 
                 emit OnBalanceChange(_usr,pid,amount.sub(user.amount), true);
 
             }else if (amount<user.amount){
-                withdrawPending(pool,pid,user.amount-amount,_usr);
+                withdrawPending(pool,pid,user.amount.sub(amount),_usr);
 
-                emit OnBalanceChange(_usr,pid,user.amount-amount, false);
+                emit OnBalanceChange(_usr,pid,user.amount.sub(amount), false);
             }
         }
 
