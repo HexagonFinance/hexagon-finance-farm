@@ -24,7 +24,6 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     struct UserInfo {
         uint256 rewardDebt;
         uint256 unpaidRewards;
-        uint256 unpaidTokens;
     }
 
     /// @notice Info of each MCV2 pool.
@@ -84,35 +83,22 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
         UserInfo storage user = userInfo[index][_user];
         uint256 pending;
         if (oldAmount > 0) {
+            pending =(oldAmount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt);
 
-            pending =
-                (oldAmount.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION).sub(
-                    user.rewardDebt
-                ).add(user.unpaidRewards);
+            (pending,,) = boostRewardAndGetTeamRoyalty(index,_user,oldAmount,pending);
+            pending =pending.add(user.unpaidRewards);
 
             uint256 balance = pool.rewardToken.balanceOf(address(this));
             if (!bHarvest){
                 user.unpaidRewards = pending;
             }else{
-                //for boost pending1
-                (uint256 boostPending,,) = boostRewardAndGetTeamRoyalty(index,_user,oldAmount,pending);
                 if (pending > balance) {
                     user.unpaidRewards = pending.sub(balance);
-                    user.unpaidTokens = boostPending.sub(balance);
-
                     pool.rewardToken.safeTransfer(to, balance);
                 } else {
-                    boostPending = boostPending.add(user.unpaidTokens);
-                    if (boostPending > balance) {
-                        user.unpaidTokens = boostPending.sub(balance);
-                        pool.rewardToken.safeTransfer(to, balance);
-                    } else {
-                        pool.rewardToken.safeTransfer(to, boostPending);
-                        user.unpaidTokens = 0;
-                    }
+                    pool.rewardToken.safeTransfer(to, pending);
+                    user.unpaidRewards = 0;
                 }
-
-                user.unpaidRewards = 0;
             }
         }
         user.rewardDebt = lpToken.mul(pool.accFlakePerShare) / ACC_TOKEN_PRECISION;

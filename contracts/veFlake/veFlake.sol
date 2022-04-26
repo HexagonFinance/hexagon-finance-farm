@@ -147,7 +147,7 @@ contract veFlake is ERC20 {
 
     }
 
-    function searchPendingIndex(pendingItem[] memory pendingAry,uint64 firstIndex,uint64 searchTime) internal pure returns (int256){
+    function searchPendingIndex(pendingItem[] storage pendingAry,uint64 firstIndex,uint64 searchTime) internal view returns (int256){
         uint256 length = pendingAry.length;
         if (uint256(firstIndex)>=length || pendingAry[firstIndex].releaseTime > searchTime) {
             return int256(firstIndex) - 1;
@@ -184,6 +184,8 @@ contract veFlake is ERC20 {
         }
     }
 
+
+
     function getUserReleasePendingAmount(address account) public view returns (uint256){
         return getReleasePendingAmount(userLeavePendingMap[account],LeavingTerm);
     }
@@ -192,7 +194,7 @@ contract veFlake is ERC20 {
         return getAllPendingAmount(userLeavePendingMap[account]);
     }
 
-    function getAllPendingAmount(pendingGroup memory userPendings) internal pure returns (uint256){
+    function getAllPendingAmount(pendingGroup storage userPendings) internal view returns (uint256){
         uint256 len = userPendings.pendingAry.length;
         if(len == 0){
             return 0;
@@ -200,7 +202,7 @@ contract veFlake is ERC20 {
         return SafeMath.sub(userPendings.pendingAry[len-1].pendingAmount,userPendings.pendingDebt);
     }
 
-    function getReleasePendingAmount(pendingGroup memory userPendings,uint64 releaseTerm) internal view returns (uint256){
+    function getReleasePendingAmount(pendingGroup storage userPendings,uint64 releaseTerm) internal view returns (uint256){
         uint64 curTime = uint64(SafeMath.sub(currentTime(),releaseTerm));
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
         if (index<int256(userPendings.firstIndex)){
@@ -236,6 +238,7 @@ contract veFlake is ERC20 {
 
 
     function updateUserPending(pendingGroup storage userPendings,uint64 releaseTerm)internal returns (uint256){
+
         uint64 curTime = uint64(SafeMath.sub(currentTime(),releaseTerm));
         int256 index = searchPendingIndex(userPendings.pendingAry,userPendings.firstIndex,curTime);
         if (index<int256(userPendings.firstIndex)){
