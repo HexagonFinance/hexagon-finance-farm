@@ -74,10 +74,10 @@ contract('Saving Pool Farm', function (accounts){
 
       flake = await RewardMeltToken.new("falke token","flake",18);
 
-      veFlake = await SavingMinePool.new(accounts[0],"veFalke token","veFlake",18);
+      veFlake = await SavingMinePool.new(flake.address,accounts[0],"veFalke token","veFlake",18);
       console.log("pool address:", veFlake.address);
 
-      await veFlake.setFlake(flake.address,{from:accounts[0]});
+  //    await veFlake.setFlake(flake.address,{from:accounts[0]});
 
       await flake.mint(staker1,VAL_1B);
       await flake.mint(staker2,VAL_1B);
