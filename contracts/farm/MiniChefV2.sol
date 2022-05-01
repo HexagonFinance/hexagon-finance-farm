@@ -210,9 +210,9 @@ contract MiniChefV2 {
     /// @return pool Returns the pool that was updated.
     function updatePool(uint256 pid) public returns (PoolInfo memory pool) {
         pool = poolInfo[pid];
-        if (block.timestamp > pool.lastRewardTime && totalAllocPoint > 0) {
+        if (block.timestamp > pool.lastRewardTime) {
             uint256 lpSupply = lpGauges[pid].totalSupply();
-            if (lpSupply > 0) {
+            if (lpSupply > 0 && totalAllocPoint > 0) {
                 uint256 time = block.timestamp.sub(pool.lastRewardTime);
                 uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
                 pool.accFlakePerShare = pool.accFlakePerShare.add((flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply).to128());
