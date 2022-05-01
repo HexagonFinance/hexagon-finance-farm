@@ -387,11 +387,11 @@ contract MiniChefV2 {
         user.amount = 0;
         user.rewardDebt = 0;
         IRewarder _rewarder = rewarder[pid];
+
         if (address(_rewarder) != address(0)) {
-            try _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false){
-            }catch{
-            }
+            _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false);
         }
+
         lpGauges[pid].burn(msg.sender,amount);
         // Note: transfer can fail or succeed if `amount` is zero.
         lpToken[pid].safeTransfer(to, amount);
