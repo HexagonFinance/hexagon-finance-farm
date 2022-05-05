@@ -5,30 +5,32 @@ import './ERC20.sol';
 
 contract FlakeToken is ERC20{
 
-    string private name_;
-    string private symbol_;
-    uint8  private decimals_;
+    string private name_ = "FLAKE";
+    string private symbol_ = "FLAKE";
+    uint8  private decimals_ = 18;
 
     //total tokens supply
-    uint256 constant public MAX_TOTAL_TOKEN_AMOUNT = 100_000_000 ether;
-    uint256 constant public MAX_RESERVE_AMOUNT = 10_000_000 ether;     //10% for reserve
-    uint256 constant public MAX_BUSINESS_EXPANDING = 5_000_000 ether;  //5% for business expanding
+    uint256 constant public AIRDROPS_LBP_AMOUNT = 5_000_000 ether;  //5%
+    uint256 constant public TEAM_AMOUNT = 6_000_000 ether;  //6%
+    uint256 constant public PARTNERS_AMOUNT = 12_000_000 ether;  //12%
+    uint256 constant public TREASURE_AMOUNT = 12_000_000 ether;  //12%
+    uint256 constant public LIQUIDITY_MINING_EMISSIONS_AMOUNT = 65_000_000 ether;  //65%
 
-    constructor(string memory tokenName,
-                string memory tokenSymbol,
-                uint8 tokenDecimal,
-                address initHolder,
-                address reserveHolder,
-                address businessHolder)
+
+    address constant public AIRDROPS_LBP_ADDRESS = 0x0B15679740123FF6952480e6D6Fe375F50299014;
+    address constant public TEAM_ADDRESS = 0x10A108faD8d396aCb42A7f00468d4d6f8429e250;
+    address constant public PARTNERS_ADDRESS = 0x139C223371025f5289eE639757EbEcdc2359a725;
+    address constant public TREASURE_ADDRESS = 0x76bED429d329756088eDd6327cb734dA2564bc57;
+    address constant public LIQUIDITY_MINING_EMISSIONS_ADDRESS = 0xd61B65C0058ce0EC19A238cAC41BBbabBE7fE4F4;
+
+    constructor()
         public
     {
-        name_ = tokenName;
-        symbol_ = tokenSymbol;
-        decimals_ = tokenDecimal;
-
-        _mint(reserveHolder,MAX_RESERVE_AMOUNT);
-        _mint(businessHolder,MAX_BUSINESS_EXPANDING);
-        _mint(initHolder,MAX_TOTAL_TOKEN_AMOUNT.sub(MAX_RESERVE_AMOUNT).sub(MAX_BUSINESS_EXPANDING));
+        _mint(AIRDROPS_LBP_ADDRESS,AIRDROPS_LBP_AMOUNT);
+        _mint(TEAM_ADDRESS,TEAM_AMOUNT);
+        _mint(PARTNERS_ADDRESS,PARTNERS_AMOUNT);
+        _mint(TREASURE_ADDRESS,TREASURE_AMOUNT);
+        _mint(LIQUIDITY_MINING_EMISSIONS_ADDRESS,LIQUIDITY_MINING_EMISSIONS_AMOUNT);
     }
 
     /**
