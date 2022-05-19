@@ -11,8 +11,8 @@ import "./lpGauge.sol";
 import "../interfaces/IBoost.sol";
 
 
-/// @notice The (older) MasterChef contract gives out a constant number of FLAKE tokens per block.
-/// It is the only address with minting rights for FLAKE.
+/// @notice The (older) MasterChef contract gives out a constant number of tokens per block.
+/// It is the only address with minting rights for token.
 /// The idea for this MasterChef V2 (MCV2) contract is therefore to be the owner of a dummy token
 /// that is deposited into the MasterChef V1 (MCV1) contract.
 /// The allocation point for this pool on MCV1 is the total allocation point for all pools that receive double incentives.
@@ -24,7 +24,7 @@ contract MiniChefV2 {
 
     /// @notice Info of each MCV2 user.
     /// `amount` LP token amount the user has provided.
-    /// `rewardDebt` The amount of FLAKE entitled to the user.
+    /// `rewardDebt` The amount of token entitled to the user.
     struct UserInfo {
         uint256 amount;
         int256 rewardDebt;
@@ -34,7 +34,7 @@ contract MiniChefV2 {
     /// `allocPoint` The amount of allocation points assigned to the pool.
 
     struct PoolInfo {
-        uint128 accFlakePerShare;
+        uint128 accTokenPerShare;
         uint64 lastRewardTime;
         uint64 allocPoint;
     }
@@ -48,8 +48,8 @@ contract MiniChefV2 {
         _;
     }
 
-    /// @notice Address of FLAKE contract.
-    IERC20 public FLAKE;
+    /// @notice Address of token contract.
+    IERC20 public TOKEN;
 
     /// @notice Info of each MCV2 pool.
     PoolInfo[] public poolInfo;
@@ -69,8 +69,8 @@ contract MiniChefV2 {
     /// @dev Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint;
 
-    uint256 public flakePerSecond;
-    uint256 private constant ACC_FLAKE_PRECISION = 1e12;
+    uint256 public tokenPerSecond;
+    uint256 private constant ACC_TOKEN_PRECISION = 1e12;
 
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
     event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, address indexed to);
@@ -78,28 +78,28 @@ contract MiniChefV2 {
     event Harvest(address indexed user, uint256 indexed pid, uint256 amount,uint256 boostedAmount);
     event LogPoolAddition(uint256 indexed pid, uint256 allocPoint, IERC20 indexed lpToken, IRewarder indexed rewarder);
     event LogSetPool(uint256 indexed pid, uint256 allocPoint, IRewarder indexed rewarder, bool overwrite);
-    event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accFlakePerShare);
-    event LogFlakePerSecond(uint256 flakePerSecond);
+    event LogUpdatePool(uint256 indexed pid, uint64 lastRewardTime, uint256 lpSupply, uint256 accTokenPerShare);
+    event LogTokenPerSecond(uint256 tokenPerSecond);
 
     event OnBalanceChange(address indexed user, uint256 indexed pid, uint256 amount, bool increase);
 
     event SetBooster(address indexed booster);
 
-    /// @param _flake The FLAKE token contract address.
+    /// @param _token The token contract address.
     constructor(address _multiSignature,
-                IERC20 _flake)
+                IERC20 _token)
         public
     {
-        FLAKE = _flake;
+        TOKEN = _token;
         safeMulsig = _multiSignature;
     }
 
 //    function setMulsigAndRewardToken(address _multiSignature,
-//                                     address _flake)
+//                                     address _token)
 //        onlyMultisig
 //        public
 //    {
-//        FLAKE = IERC20(_flake);
+//        TOKEN = IERC20(_token);
 //        safeMulsig = _multiSignature;
 //    }
 
@@ -148,13 +148,13 @@ contract MiniChefV2 {
         poolInfo.push(PoolInfo({
             allocPoint: allocPoint.to64(),
             lastRewardTime: block.timestamp.to64(),
-            accFlakePerShare: 0
+            accTokenPerShare: 0
         }));
         addedTokens[address(_lpToken)] = true;
         emit LogPoolAddition(_pid, allocPoint, _lpToken, _rewarder);
     }
 
-    /// @notice Update the given pool's FLAKE allocation point and `IRewarder` contract. Can only be called by the owner.
+    /// @notice Update the given pool's TOKEN allocation point and `IRewarder` contract. Can only be called by the owner.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _allocPoint New AP of the pool.
     /// @param _rewarder Address of the rewarder delegate.
@@ -168,29 +168,29 @@ contract MiniChefV2 {
         emit LogSetPool(_pid, _allocPoint, overwrite ? _rewarder : rewarder[_pid], overwrite);
     }
 
-    /// @notice Sets the FLAKE per second to be distributed. Can only be called by the owner.
-    /// @param _flakePerSecond The amount of FLAKE to be distributed per second.
-    function setFlakePerSecond(uint256 _flakePerSecond) external onlyMultisig {
-        flakePerSecond = _flakePerSecond;
-        emit LogFlakePerSecond(_flakePerSecond);
+    /// @notice Sets the TOKEN per second to be distributed. Can only be called by the owner.
+    /// @param _tokenPerSecond The amount of TOKEN to be distributed per second.
+    function setTokenPerSecond(uint256 _tokenPerSecond) external onlyMultisig {
+        tokenPerSecond = _tokenPerSecond;
+        emit LogTokenPerSecond(_tokenPerSecond);
     }
 
 
-    /// @notice View function to see pending FLAKE on frontend.
+    /// @notice View function to see pending TOKEN on frontend.
     /// @param _pid The index of the pool. See `poolInfo`.
     /// @param _user Address of user.
-    /// return pending FLAKE reward for a given user.
-    function pendingFlake(uint256 _pid, address _user) external view returns (uint256 wholePending,uint256 incAmount,uint256 teamRoyalty) {
+    /// return pending TOKEN reward for a given user.
+    function pendingToken(uint256 _pid, address _user) external view returns (uint256 wholePending,uint256 incAmount,uint256 teamRoyalty) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo storage user = userInfo[_pid][_user];
-        uint256 accFlakePerShare = pool.accFlakePerShare;
+        uint256 accTokenPerShare = pool.accTokenPerShare;
         uint256 lpSupply = lpGauges[_pid].totalSupply();
         if (block.timestamp > pool.lastRewardTime && lpSupply != 0 && totalAllocPoint > 0) {
             uint256 time = block.timestamp.sub(pool.lastRewardTime);
-            uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
-            accFlakePerShare = accFlakePerShare.add(flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply);
+            uint256 tokenReward = time.mul(tokenPerSecond).mul(pool.allocPoint) / totalAllocPoint;
+            accTokenPerShare = accTokenPerShare.add(tokenReward.mul(ACC_TOKEN_PRECISION) / lpSupply);
         }
-        uint256 pending = int256(user.amount.mul(accFlakePerShare) / ACC_FLAKE_PRECISION).sub(user.rewardDebt).toUInt256();
+        uint256 pending = int256(user.amount.mul(accTokenPerShare) / ACC_TOKEN_PRECISION).sub(user.rewardDebt).toUInt256();
 
         ///////////////////////////////////////////////////////////////////////////
         (wholePending,incAmount,teamRoyalty) = boostRewardAndGetTeamRoyalty(_pid,_user,user.amount,pending);
@@ -214,12 +214,12 @@ contract MiniChefV2 {
             uint256 lpSupply = lpGauges[pid].totalSupply();
             if (lpSupply > 0 && totalAllocPoint > 0) {
                 uint256 time = block.timestamp.sub(pool.lastRewardTime);
-                uint256 flakeReward = time.mul(flakePerSecond).mul(pool.allocPoint) / totalAllocPoint;
-                pool.accFlakePerShare = pool.accFlakePerShare.add((flakeReward.mul(ACC_FLAKE_PRECISION) / lpSupply).to128());
+                uint256 tokenReward = time.mul(tokenPerSecond).mul(pool.allocPoint) / totalAllocPoint;
+                pool.accTokenPerShare = pool.accTokenPerShare.add((tokenReward.mul(ACC_TOKEN_PRECISION) / lpSupply).to128());
             }
             pool.lastRewardTime = block.timestamp.to64();
             poolInfo[pid] = pool;
-            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accFlakePerShare);
+            emit LogUpdatePool(pid, pool.lastRewardTime, lpSupply, pool.accTokenPerShare);
         }
     }
 
@@ -246,7 +246,7 @@ contract MiniChefV2 {
         }
 
     }
-    /// @notice Deposit LP tokens to MCV2 for FLAKE allocation.
+    /// @notice Deposit LP tokens to MCV2 for TOKEN allocation.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to deposit.
     /// @param to The receiver of `amount` deposit benefit.
@@ -265,12 +265,12 @@ contract MiniChefV2 {
         UserInfo storage user = userInfo[pid][to];
         uint256 oldAmount = user.amount;
         user.amount = user.amount.add(amount);
-        user.rewardDebt = user.rewardDebt.add(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
+        user.rewardDebt = user.rewardDebt.add(int256(amount.mul(pool.accTokenPerShare) / ACC_TOKEN_PRECISION));
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, to, to, oldAmount, user.amount,false);
+            _rewarder.onTokenReward(pid, to, to, oldAmount, user.amount,false);
         }
     }
     /// @notice Withdraw LP tokens from MCV2.
@@ -290,19 +290,19 @@ contract MiniChefV2 {
         UserInfo storage user = userInfo[pid][_usr];
         // Effects
         uint256 oldAmount = user.amount;
-        user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
+        user.rewardDebt = user.rewardDebt.sub(int256(amount.mul(pool.accTokenPerShare) / ACC_TOKEN_PRECISION));
         user.amount = user.amount.sub(amount);
 
         // Interactions
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, _usr, _usr, oldAmount, user.amount,false);
+            _rewarder.onTokenReward(pid, _usr, _usr, oldAmount, user.amount,false);
         }
     }
 
     /// @notice Harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
-    /// @param to Receiver of FLAKE rewards.
+    /// @param to Receiver of token rewards.
     function harvest(uint256 pid,address to) public {
         harvestAccount(pid,msg.sender,to);
     }
@@ -310,72 +310,72 @@ contract MiniChefV2 {
     function harvestAccount(uint256 pid,address account,address to) internal {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][account];
-        int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
-        uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
+        int256 accumulatedToken = int256(user.amount.mul(pool.accTokenPerShare) / ACC_TOKEN_PRECISION);
+        uint256 _pendingToken = accumulatedToken.sub(user.rewardDebt).toUInt256();
         /////////////////////////////////////////////////////////////////////////
         //get the reward after boost
         uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,account,user.amount,_pendingFlake);
+        (_pendingToken,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,account,user.amount, _pendingToken);
         //for team royalty
         if(teamRoyalty>0&& royaltyReceiver !=address(0)) {
-            FLAKE.safeTransfer(royaltyReceiver, teamRoyalty);
+            TOKEN.safeTransfer(royaltyReceiver, teamRoyalty);
         }
 
         //////////////////////////////////////////////////////////////////////////
 
         // Effects
-        user.rewardDebt = accumulatedFlake;
+        user.rewardDebt = accumulatedToken;
 
         // Interactions
-        if (_pendingFlake != 0) {
-            FLAKE.safeTransfer(to, _pendingFlake);
+        if (_pendingToken != 0) {
+            TOKEN.safeTransfer(to, _pendingToken);
         }
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward( pid, account, to, user.amount, user.amount,true);
+            _rewarder.onTokenReward( pid, account, to, user.amount, user.amount,true);
         }
 
-        emit Harvest(account, pid, _pendingFlake,incReward);
+        emit Harvest(account, pid, _pendingToken,incReward);
     }
 
     /// @notice Withdraw LP tokens from MCV2 and harvest proceeds for transaction sender to `to`.
     /// @param pid The index of the pool. See `poolInfo`.
     /// @param amount LP token amount to withdraw.
-    /// @param to Receiver of the LP tokens and FLAKE rewards.
+    /// @param to Receiver of the LP tokens and TOKEN rewards.
     function withdrawAndHarvest(uint256 pid, uint256 amount, address to) external {
         PoolInfo memory pool = updatePool(pid);
         UserInfo storage user = userInfo[pid][msg.sender];
         uint256 oldAmount = user.amount;
-        int256 accumulatedFlake = int256(user.amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION);
-        uint256 _pendingFlake = accumulatedFlake.sub(user.rewardDebt).toUInt256();
+        int256 accumulatedToken = int256(user.amount.mul(pool.accTokenPerShare) / ACC_TOKEN_PRECISION);
+        uint256 _pendingToken = accumulatedToken.sub(user.rewardDebt).toUInt256();
         ////////////////////////////////////////////////////////////////////////
         //get the reward after boost
         uint256 incReward = 0;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount,_pendingFlake);
+        (_pendingToken,incReward,teamRoyalty) = boostRewardAndGetTeamRoyalty(pid,msg.sender,user.amount, _pendingToken);
         //for team royalty
         if(teamRoyalty>0&& royaltyReceiver !=address(0)) {
-            FLAKE.safeTransfer(royaltyReceiver, teamRoyalty);
+            TOKEN.safeTransfer(royaltyReceiver, teamRoyalty);
         }
         //////////////////////////////////////////////////////////////////////////
         // Effects
-        user.rewardDebt = accumulatedFlake.sub(int256(amount.mul(pool.accFlakePerShare) / ACC_FLAKE_PRECISION));
+        user.rewardDebt = accumulatedToken.sub(int256(amount.mul(pool.accTokenPerShare) / ACC_TOKEN_PRECISION));
         user.amount = user.amount.sub(amount);
         // Interactions
-        FLAKE.safeTransfer(to, _pendingFlake);
+        TOKEN.safeTransfer(to, _pendingToken);
 
         IRewarder _rewarder = rewarder[pid];
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, msg.sender, to, oldAmount, user.amount,true);
+            _rewarder.onTokenReward(pid, msg.sender, to, oldAmount, user.amount,true);
         }
 
 
         lpToken[pid].safeTransfer(to, amount);
         lpGauges[pid].burn(msg.sender,amount);
         emit Withdraw(msg.sender, pid, amount, to);
-        emit Harvest(msg.sender, pid, _pendingFlake,incReward);
+        emit Harvest(msg.sender, pid, _pendingToken,incReward);
     }
 
     /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
@@ -389,7 +389,7 @@ contract MiniChefV2 {
         IRewarder _rewarder = rewarder[pid];
 
         if (address(_rewarder) != address(0)) {
-            _rewarder.onFlakeReward(pid, msg.sender, to, 0, 0,false);
+            _rewarder.onTokenReward(pid, msg.sender, to, 0, 0,false);
         }
 
         lpGauges[pid].burn(msg.sender,amount);
@@ -419,7 +419,7 @@ contract MiniChefV2 {
 
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyMultisig {
         //settle for the user
-        harvest(_pid, _user);
+        harvest(_pid, msg.sender);
 
         booster.setWhiteListMemberStatus(_pid,_user,_status);
     }
@@ -430,7 +430,7 @@ contract MiniChefV2 {
 
             if(booster.whiteListLpUserInfo(_pid,_user[i])) {
                 //settle for the user
-                harvest(_pid, _user[i]);
+                harvest(_pid, msg.sender);
             }
 
             booster.setWhiteListMemberStatus(_pid,_user[i],true);
@@ -445,18 +445,18 @@ contract MiniChefV2 {
         booster.setFixedTeamRatio(_pid,_ratio);
     }
 
-    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingFlake) view public returns(uint256,uint256,uint256) {
+    function boostRewardAndGetTeamRoyalty(uint256 _pid,address _user,uint256 _userLpAmount,uint256 _pendingToken) view public returns(uint256,uint256,uint256) {
         if(address(booster)==address(0)) {
-            return (_pendingFlake,0,0);
+            return (_pendingToken,0,0);
         }
         //record init reward
-        uint256 incReward = _pendingFlake;
+        uint256 incReward = _pendingToken;
         uint256 teamRoyalty = 0;
-        (_pendingFlake,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount,_pendingFlake);
-        //(_pendingFlake+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
-        incReward = _pendingFlake.add(teamRoyalty).sub(incReward);
+        (_pendingToken,teamRoyalty) = booster.getTotalBoostedAmount(_pid,_user,_userLpAmount, _pendingToken);
+        //(_pendingToken+teamRoyalty) is total (boosted reward inclued baseAnount + init reward)
+        incReward = _pendingToken.add(teamRoyalty).sub(incReward);
 
-        return (_pendingFlake,incReward,teamRoyalty);
+        return (_pendingToken,incReward,teamRoyalty);
     }
 
     function boostDeposit(uint256 _pid,uint256 _amount) external {

@@ -14,7 +14,7 @@ describe("MiniChefV2", function () {
     await lpToken.deployed();
     const minichef = await MiniChefV2.deploy(owner.getAddress(),flake.address);
     await minichef.deployed();
-    await minichef.setFlakePerSecond("1000000000");
+    await minichef.setTokenPerSecond("1000000000");
     const rewarder = await MultiRewarderTime.deploy(minichef.address,0);
     await rewarder.deployed();
     await minichef.add("10000", lpToken.address, rewarder.address);
@@ -36,10 +36,10 @@ describe("MiniChefV2", function () {
   });
   async function logUserInfo(minichef,owner,addr1){
     let userInfo = await minichef.userInfo(0,owner.address);
-    let balance = await minichef.pendingFlake(0,owner.address);
+    let balance = await minichef.pendingToken(0,owner.address);
     console.log("owner userInfo",balance,userInfo);
     userInfo = await minichef.userInfo(0,addr1.address);
-    balance = await minichef.pendingFlake(0,addr1.address);
+    balance = await minichef.pendingToken(0,addr1.address);
     console.log("addr1 userInfo",balance,userInfo);
   }
 });

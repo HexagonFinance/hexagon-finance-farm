@@ -5,7 +5,7 @@ const LpToken = artifacts.require('MockToken');
 const FlakeToken = artifacts.require("MockToken");
 const BoostToken = artifacts.require("MockToken");
 
-const BoostSc = artifacts.require("hexagonBoost");
+const BoostSc = artifacts.require("booster");
 const LpGauge = artifacts.require("lpGauge");
 const assert = require('chai').assert;
 const Web3 = require('web3');
@@ -100,7 +100,7 @@ contract('hexgon farm test', function (accounts){
             );
         assert.equal(res.receipt.status,true);
 
-        res = await farminst.setFlakePerSecond(rewardPerSec);
+        res = await farminst.setTokenPerSecond(rewardPerSec);
         assert.equal(res.receipt.status,true);
 
         await flake.mint(farminst.address,VAL_1B);
@@ -163,7 +163,7 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
         time.increase(1);
 
-        let staker1Pending = await farminst.pendingFlake(0,staker1);
+        let staker1Pending = await farminst.pendingToken(0,staker1);
         console.log("pending flaker 1",staker1Pending[0].toString(10),staker1Pending[1].toString(10),staker1Pending[2].toString(10));
     })
 
@@ -181,7 +181,7 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
         time.increase(1);
 
-        let staker2Pending = await farminst.pendingFlake(0,staker2);
+        let staker2Pending = await farminst.pendingToken(0,staker2);
         console.log("pending flake staker2",staker2Pending[0].toString(10),staker2Pending[1].toString(10),staker2Pending[2].toString(10));
     })
 
@@ -190,7 +190,7 @@ contract('hexgon farm test', function (accounts){
         assert.equal(res.receipt.status,true);
         time.increase(10);
 
-        let staker3Pending = await farminst.pendingFlake(0,staker3);
+        let staker3Pending = await farminst.pendingToken(0,staker3);
         console.log("pending flake staker3",staker3Pending[0].toString(10),staker3Pending[1].toString(10),staker3Pending[2].toString(10));
 
     })

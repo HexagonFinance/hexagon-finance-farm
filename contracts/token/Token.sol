@@ -3,10 +3,10 @@
 pragma solidity 0.6.12;
 import './ERC20.sol';
 
-contract FlakeToken is ERC20{
+contract Token is ERC20{
 
-    string private name_ = "FLAKE";
-    string private symbol_ = "FLAKE";
+    string private name_ = "F";
+    string private symbol_ = "F";
     uint8  private decimals_ = 18;
 
     //total tokens supply

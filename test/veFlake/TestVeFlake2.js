@@ -1,6 +1,6 @@
 const { time, expectEvent} = require("@openzeppelin/test-helpers");
 
-const SavingMinePool = artifacts.require('veFlake');
+const SavingMinePool = artifacts.require('veToken');
 
 const RewardMeltToken = artifacts.require("MockToken");
 

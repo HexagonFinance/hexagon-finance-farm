@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-contract hexagonBoostStorage {
+contract boosterStorage {
     address public safeMulsig;
     address public farmChef;
     uint256 constant public RATIO_DENOM = 1000;

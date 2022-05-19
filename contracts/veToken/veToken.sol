@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity 0.6.12;
-import '../flake/ERC20.sol';
+import '../token/ERC20.sol';
 import '../libraries/SafeMath.sol';
 import "@boringcrypto/boring-solidity/contracts/libraries/BoringERC20.sol";
 
-contract veFlake is ERC20 {
+contract veToken is ERC20 {
     using SafeMath for uint256;
     using BoringERC20 for IERC20;
 
-    IERC20 immutable public flake;
+    IERC20 immutable public token;
     address public safeMulsig;
 
     modifier onlyOrigin() {
@@ -17,10 +17,10 @@ contract veFlake is ERC20 {
         _;
     }
 
-    event Enter(address indexed user, uint256 flakeAmount,uint256 veFlakeAmount);
-    event Leave(address indexed user, uint256 flakeAmount,uint256 veFlakeAmount);
-    event ApplyLeave(address indexed user, uint256 veFlakeAmount);
-    event CancelLeave(address indexed user, uint256 veFlakeAmount);
+    event Enter(address indexed user, uint256 tokenAmount,uint256 veTokenAmount);
+    event Leave(address indexed user, uint256 tokenAmount,uint256 veTokenAmount);
+    event ApplyLeave(address indexed user, uint256 veTokenAmount);
+    event CancelLeave(address indexed user, uint256 veTokenAmount);
 
     string private name_;
     string private symbol_;
@@ -41,9 +41,9 @@ contract veFlake is ERC20 {
 
     mapping(address=>pendingGroup) public userLeavePendingMap;
     // Define the token contract
-    constructor(IERC20 _flake,address _multiSignature,string memory tokenName,string memory tokenSymbol,uint8 tokenDecimal) public {
+    constructor(IERC20 _token,address _multiSignature,string memory tokenName,string memory tokenSymbol,uint8 tokenDecimal) public {
         safeMulsig = _multiSignature;
-        flake = _flake;
+        token = _token;
 
         name_ = tokenName;
         symbol_ = tokenSymbol;
@@ -54,8 +54,8 @@ contract veFlake is ERC20 {
         require(a <= uint192(-1), "BoringMath: uint192 Overflow");
         c = uint192(a);
     }
-//    function setFlake(IERC20 _flake) external onlyOrigin{
-//        flake = _flake;
+//    function setToken(IERC20 _token) external onlyOrigin{
+//        token = _token;
 //    }
 
 //    function setLeavingTerm(uint64 _leavingTerm) external onlyOrigin{
@@ -90,25 +90,25 @@ contract veFlake is ERC20 {
 
     function enter(uint256 _amount) external {
         require(_amount>0,"amount need to over zero!");
-        // Gets the amount of locked flake in the contract
-        uint256 totalFlake = flake.balanceOf(address(this));
-        // Gets the amount of veFlake in existence
+        // Gets the amount of locked token in the contract
+        uint256 totalToken = token.balanceOf(address(this));
+        // Gets the amount of veToken in existence
         uint256 totalShares = totalSupply();
-        // If no veFlake exists, mint it 1:1 to the amount put in
-        if (totalShares == 0 || totalFlake == 0) {
+        // If no veToken exists, mint it 1:1 to the amount put in
+        if (totalShares == 0 || totalToken == 0) {
             require(_amount > 1 ether,"the init amount is too small");
             _mint(msg.sender, _amount);
             emit Enter(msg.sender,_amount,_amount);
         }
-        // Calculate and mint the amount of veFlake the flake is worth. The ratio will change overtime, as veFlake is burned/minted and flake deposited + gained from fees / withdrawn.
+        // Calculate and mint the amount of veToken the token is worth. The ratio will change overtime, as veToken is burned/minted and token deposited + gained from fees / withdrawn.
         else {
-            uint256 what = _amount.mul(totalShares).div(totalFlake);
+            uint256 what = _amount.mul(totalShares).div(totalToken);
             _mint(msg.sender, what);
             emit Enter(msg.sender,_amount,what);
         }
 
-        // Lock the flake in the contract
-        flake.safeTransferFrom(msg.sender, address(this), _amount);
+        // Lock the token in the contract
+        token.safeTransferFrom(msg.sender, address(this), _amount);
 
 
     }
@@ -124,7 +124,7 @@ contract veFlake is ERC20 {
     function cancelLeave() external {
         pendingGroup storage userPendings = userLeavePendingMap[msg.sender];
         uint256 pendingLength = userPendings.pendingArray.length;
-        require(pendingLength > 0,"veFlake : Empty leave pending queue!");
+        require(pendingLength > 0,"veToken : Empty leave pending queue!");
            // leave();
         uint256 amount = userPendings.pendingArray[uint256(pendingLength-1)].pendingAmount - userPendings.pendingDebt;
         _transfer(address(this),msg.sender,amount);
@@ -133,23 +133,23 @@ contract veFlake is ERC20 {
         userPendings.pendingDebt = userPendings.pendingArray[uint256(pendingLength-1)].pendingAmount;
         emit  CancelLeave(msg.sender,amount);
     }
-    // Leave the bar. Claim back your flake.
-    // Unlocks the staked + gained flake and burns veFlake
+    // Leave the bar. Claim back your token.
+    // Unlocks the staked + gained token and burns veToken
     function leave() external {
-        // Gets the amount of veFlake in existence
+        // Gets the amount of veToken in existence
         uint256 totalShares = totalSupply();
         uint256 _share = updateUserPending(userLeavePendingMap[msg.sender],LeavingTerm);
 
         require(_share>0,"pending share need to be over 0!");
 
-        // Calculates the amount of flake the veFlake is worth
-        uint256 what = _share.mul(flake.balanceOf(address(this))).div(
+        // Calculates the amount of token the veToken is worth
+        uint256 what = _share.mul(token.balanceOf(address(this))).div(
             totalShares
         );
 
         _burn(address(this), _share);
 
-        flake.safeTransfer(msg.sender, what);
+        token.safeTransfer(msg.sender, what);
 
         emit Leave(msg.sender, what,_share);
 
@@ -219,27 +219,27 @@ contract veFlake is ERC20 {
         return SafeMath.sub(userPendings.pendingArray[uint256(index)].pendingAmount,userPendings.pendingDebt);
     }
 
-    function getFlakeAmount(uint256 _share) external view returns (uint256) {
-        // Gets the amount of veFlake in existence
+    function getTokenAmount(uint256 _share) external view returns (uint256) {
+        // Gets the amount of veToken in existence
         uint256 totalShares = totalSupply();
         if(totalShares==0) {
             return _share;
         }
-        // Calculates the amount of flake the veFlake is worth
-        return _share.mul(flake.balanceOf(address(this))).div(totalShares);
+        // Calculates the amount of token the veToken is worth
+        return _share.mul(token.balanceOf(address(this))).div(totalShares);
 
     }
 
-    function getVeFlakeShare(uint256 _amount) external view returns (uint256) {
-        uint256 totalFlake = flake.balanceOf(address(this));
-        // Gets the amount of veFlake in existence
+    function getVeTokenShare(uint256 _amount) external view returns (uint256) {
+        uint256 totalToken = token.balanceOf(address(this));
+        // Gets the amount of veToken in existence
         uint256 totalShares = totalSupply();
-        // If no veFlake exists, mint it 1:1 to the amount put in
-        if (totalShares == 0 || totalFlake == 0) {
+        // If no veToken exists, mint it 1:1 to the amount put in
+        if (totalShares == 0 || totalToken == 0) {
             return _amount;
         }
          else {
-            return _amount.mul(totalShares).div(totalFlake);
+            return _amount.mul(totalShares).div(totalToken);
         }
     }
 

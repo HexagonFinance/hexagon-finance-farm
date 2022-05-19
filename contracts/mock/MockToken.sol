@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "../flake/ERC20.sol";
+import "../token/ERC20.sol";
 import "../libraries/Ownable.sol";
 
 contract MockToken is ERC20, Ownable {

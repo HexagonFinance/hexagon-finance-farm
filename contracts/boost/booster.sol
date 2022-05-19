@@ -6,11 +6,11 @@ import "@boringcrypto/boring-solidity/contracts/BoringBatchable.sol";
 //import "@boringcrypto/boring-solidity/contracts/BoringOwnable.sol";
 
 import "../libraries/SafeMath.sol";
-import "./hexagonBoostStorage.sol";
+import "./boosterStorage.sol";
 import "../libraries/SmallNumbers.sol";
 import "../interfaces/IMiniChefV2.sol";
 
-contract hexagonBoost is hexagonBoostStorage {
+contract booster is boosterStorage {
     using SafeMath for uint256;
     using BoringERC20 for IERC20;
 

@@ -5,7 +5,7 @@ const LpToken = artifacts.require('MockToken');
 const FlakeToken = artifacts.require("MockToken");
 const BoostToken = artifacts.require("MockToken");
 
-const BoostSc = artifacts.require("hexagonBoost");
+const BoostSc = artifacts.require("booster");
 
 const assert = require('chai').assert;
 const Web3 = require('web3');
@@ -100,7 +100,7 @@ contract('hexgon farm test', function (accounts){
             );
         assert.equal(res.receipt.status,true);
 
-        res = await farminst.setFlakePerSecond(rewardPerSec);
+        res = await farminst.setTokenPerSecond(rewardPerSec);
         assert.equal(res.receipt.status,true);
 
         await flake.mint(farminst.address,VAL_1B);
@@ -156,7 +156,7 @@ contract('hexgon farm test', function (accounts){
          assert.equal(res.receipt.status,true);
          time.increase(1);
 
-        let pending = await farminst.pendingFlake(0,staker1);
+        let pending = await farminst.pendingToken(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
 
     })
@@ -176,7 +176,7 @@ contract('hexgon farm test', function (accounts){
         console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
        // assert.equal(tokenBoostRatio[0].toString(10),baseIncreaseRatio.toString(10),"1000 boost ratio should be same");
 
-        let pending = await farminst.pendingFlake(0,staker1);
+        let pending = await farminst.pendingToken(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
 
         let boostTokenAmount = await boostToken.balanceOf(booster.address);
@@ -192,7 +192,7 @@ contract('hexgon farm test', function (accounts){
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
         console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
 
-        let pending = await farminst.pendingFlake(0,staker1);
+        let pending = await farminst.pendingToken(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
 
         let boostTokenAmount = await boostToken.balanceOf(booster.address);
@@ -208,7 +208,7 @@ contract('hexgon farm test', function (accounts){
         let tokenBoostRatio = await booster.getUserBoostRatio(0,staker1);
         console.log(new BN(tokenBoostRatio[0].toString(10)).div(new BN(tokenBoostRatio[1].toString(10))).toString(10))
 
-        let pending = await farminst.pendingFlake(0,staker1);
+        let pending = await farminst.pendingToken(0,staker1);
         console.log("pending flake",pending[0].toString(10),pending[1].toString(10),pending[2].toString(10));
 
         let boostTokenAmount = await boostToken.balanceOf(booster.address);

@@ -5,7 +5,7 @@ const LpToken = artifacts.require('MockToken');
 const FlakeToken = artifacts.require("MockToken");
 const BoostToken = artifacts.require("MockToken");
 
-const BoostSc = artifacts.require("hexagonBoost");
+const BoostSc = artifacts.require("booster");
 
 const assert = require('chai').assert;
 const Web3 = require('web3');
@@ -100,7 +100,7 @@ contract('hexgon farm test', function (accounts){
             );
         assert.equal(res.receipt.status,true);
 
-        res = await farminst.setFlakePerSecond(rewardPerSec);
+        res = await farminst.setTokenPerSecond(rewardPerSec);
         assert.equal(res.receipt.status,true);
 
         await flake.mint(farminst.address,VAL_1B);
