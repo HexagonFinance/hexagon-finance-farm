@@ -419,7 +419,7 @@ contract MiniChefV2 {
 
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyMultisig {
         //settle for the user
-        harvest(_pid, msg.sender);
+        harvest(_pid, _user);
 
         booster.setWhiteListMemberStatus(_pid,_user,_status);
     }
@@ -430,7 +430,7 @@ contract MiniChefV2 {
 
             if(booster.whiteListLpUserInfo(_pid,_user[i])) {
                 //settle for the user
-                harvest(_pid, msg.sender);
+                harvest(_pid, _user[i]);
             }
 
             booster.setWhiteListMemberStatus(_pid,_user[i],true);
