@@ -419,7 +419,7 @@ contract MiniChefV2 {
 
     function setWhiteListMemberStatus(uint256 _pid,address _user,bool _status)  external onlyMultisig {
         //settle for the user
-        harvest(_pid, _user);
+        harvestAccount(_pid, _user,_user);
 
         booster.setWhiteListMemberStatus(_pid,_user,_status);
     }
@@ -430,7 +430,7 @@ contract MiniChefV2 {
 
             if(booster.whiteListLpUserInfo(_pid,_user[i])) {
                 //settle for the user
-                harvest(_pid, _user[i]);
+                harvestAccount(_pid, _user[i],_user[i]);
             }
 
             booster.setWhiteListMemberStatus(_pid,_user[i],true);
@@ -500,5 +500,12 @@ contract MiniChefV2 {
         return uint256(-1);
     }
 
+    function reclaimTokens(address token, uint256 amount, address payable to) public onlyMultisig {
+        if (token == address(0)) {
+            to.transfer(amount);
+        } else {
+            IERC20(token).safeTransfer(to, amount);
+        }
+    }
 
 }
