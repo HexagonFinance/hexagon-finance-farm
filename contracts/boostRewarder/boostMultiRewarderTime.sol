@@ -232,7 +232,7 @@ contract boostMultiRewarderTime is IRewarder,  BoringOwnable{
     }
 
     function totalSupply()internal view returns (uint256){
-        IMiniChefPool(MASTERCHEF_V2).lpGauges(chefPid).totalSupply();
+        return IMiniChefPool(MASTERCHEF_V2).lpGauges(chefPid).totalSupply();
     }
 ///////////////////////////////////////////////////////////////////////////////
     function setBooster(IBoost _booster) public onlyOwner {
