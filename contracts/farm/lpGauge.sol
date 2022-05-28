@@ -104,9 +104,9 @@ contract lpGauge is BoringOwnable{
         require(balanceOf[usr] >= amount, "insufficient balance");
         balanceOf[usr] = subtract(balanceOf[usr], amount);
         totalSupply    = subtract(totalSupply, amount);
-        if (owner != msg.sender){
-            IMiniChefV2(owner).onTransfer(pid,usr,address(0));
-        }
+//        if (owner != msg.sender){
+//            IMiniChefV2(owner).onTransfer(pid,usr,address(0));
+//        }
         emit Transfer(usr, address(0), amount);
     }
     /*
